@@ -1,0 +1,33 @@
+// Copyright 2020 Danggeun Market Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package com.eboolkiq.internal.redis;
+
+option go_package = "github.com/daangn/eboolkiq/internal/redis";
+option java_multiple_files = true;
+option java_outer_classname = "ModelProto";
+option java_package = "com.eboolkiq.internal.redis";
+
+import "google/protobuf/timestamp.proto";
+
+import "job.proto";
+import "queue.proto";
+
+message JobQueue {
+  com.eboolkiq.Job job = 1;
+  com.eboolkiq.Queue queue = 2;
+  google.protobuf.Timestamp start_at = 3;
+}
