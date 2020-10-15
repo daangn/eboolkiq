@@ -42,7 +42,7 @@ message Queue {
   // max_retry 는 Queue 에 들어오는 Job 의 기본 재시도 횟수이다. Job 에 재시도 횟수가 존재할
   // 경우, 해당 값이 우선시 된다.
   //
-  // Job 은 max_retry 횟수 만큼 재시도를 진행하며,
+  // auto_finish 가 false 일 때 유효하며, Job 은 max_retry 횟수 만큼 재시도를 진행하되
   // -1 일 경우 무한히 재시도 한다.
   int32 max_retry = 4;
 }
