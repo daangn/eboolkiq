@@ -1,0 +1,130 @@
+// Copyright 2020 Danggeun Market Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package com.eboolkiq.rpc;
+
+option go_package = "github.com/daangn/eboolkiq/rpc";
+option java_multiple_files = true;
+option java_outer_classname = "QueueProto";
+option java_package = "com.eboolkiq.rpc";
+
+import "queue.proto";
+
+service Queue {
+  // List rpc 는 eboolkiq 서버가 관리중인 모든 큐를 조회한다.
+  rpc List (ListReq) returns (ListResp);
+
+  // Get rpc 는 특정한 큐 하나를 이름으로 조회한다.
+  rpc Get (GetReq) returns (GetResp);
+
+  // Create rpc 는 존재하지 않는 큐를 생성한다.
+  rpc Create (CreateReq) returns (CreateResp);
+
+  // Delete rpc 는 이미 존재하는 큐 하나를 제거한다.
+  //
+  // 큐가 제거될 때 큐에 존재하는 모든 Job은 처리되지 못한 채로 제거된다.
+  rpc Delete (DeleteReq) returns (DeleteResp);
+
+  // Update rpc 는 이미 존재하는 큐의 설정 또는 정보를 수정한다.
+  //
+  // 큐를 업데이트 할 경우 큐에 있는 Job 이 제거되지 않으며, 이미 실행중인 Job 에 업데이트 된 큐의
+  // 설정이 반영되지는 않는다.
+  rpc Update (UpdateReq) returns (UpdateResp);
+
+  // Flush rpc 는 queue 에 존재하는 모든 Job 을 지워준다.
+  rpc Flush (FlushReq) returns (FlushResp);
+
+  // CountJob rpc 는 queue 에 존재하는 Job 의 개수를 세어준다.
+  rpc CountJob (CountJobReq) returns (CountJobResp);
+}
+
+// ListReq 는 List 를 요청하기 위한 메시지이다.
+message ListReq {
+}
+
+// ListResp 는 List 의 응답 메시지이다.
+message ListResp {
+  repeated Queue queue_list = 1;
+}
+
+// GetReq 는 Get 의 요청 메시지이다.
+message GetReq {
+  // name 은 찾고자 하는 큐의 고유 이름이다.
+  string name = 1;
+}
+
+// GetResp 는 Get 의 응답 메시지이다.
+message GetResp {
+  Queue queue = 1;
+}
+
+message CreateReq {
+  // queue 는 생성하고자 하는 큐 이다.
+  Queue queue = 1;
+}
+
+// CreateResp 는 Create 의 응답 메시지이다.
+message CreateResp {
+  // queue 는 생성된 큐 이다.
+  Queue queue = 1;
+}
+
+// DeleteReq 는 Delete 를 요청하기 위한 메시지 이다.
+message DeleteReq {
+  // name 은 Delete 하고자 하는 큐의 고유 이름이다.
+  string name = 1;
+}
+
+// DeleteResp 는 Delete 의 응답 메시지이다.
+message DeleteResp {
+}
+
+// UpdateReq 는 Update 를 요청하기 위한 메시지이다.
+message UpdateReq {
+  // queue 는 업데이트를 하기 위한 정보이다. 특정 필드 하나에 대해서 Update 가 아닌,
+  // 전체 필드에 대해서 Update 되므로 주의.
+  Queue queue = 1;
+}
+
+// UpdateResp 는 Update 의 응답 메시지이다.
+message UpdateResp {
+  // queue 는 Update 된 큐 이다.
+  Queue queue = 1;
+}
+
+// FlushReq 는 Flush 를 요청하기 위한 메시지이다.
+message FlushReq {
+  // name 은 Flush 하고자 하는 큐의 이름이다.
+  string name = 1;
+}
+
+// FlushResp 는 Flush 의 응답 메시지이다.
+message FlushResp {
+  // flushed 는 Flush 된 Job 의 개수이다.
+  uint64 flushed = 1;
+}
+
+// CountJobReq 는 CountJob 을 요청하기 위한 메시지이다.
+message CountJobReq {
+  // name 는 Job 의 개수를 Count 하기 위한 큐의 이름이다.
+  string name = 1;
+}
+
+// CountJobResp 는 CountJob 의 응답 메시지이다.
+message CountJobResp {
+  // job_count 는 큐에 존재하는 Job 의 개수이다.
+  uint64 job_count = 1;
+}
