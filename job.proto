@@ -1,0 +1,53 @@
+// Copyright 2020 Danggeun Market Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package com.eboolkiq;
+
+option go_package = "github.com/daangn/eboolkiq";
+option java_multiple_files = true;
+option java_outer_classname = "JobProto";
+option java_package = "com.eboolkiq";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/struct.proto";
+
+message Job {
+  // id 는 Job 을 식별하기 위한 고유 문자열 값이다.
+  string id = 1;
+
+  // description 은 Job 의 설명이다.
+  string description = 2;
+
+  // params 는 Job 을 실행하기 위해 전달되어야 하는 파라미터이다.
+  google.protobuf.ListValue params = 3;
+
+  // start 는 Job 을 scheduled 하기 위한 파라미터이다.
+  //
+  // 특정 시간에 전달되기를 원한다면 start_at 을 사용하고,
+  // 요청으로부터 특정 duration 이후에 전달되기를 원한다면 start_after 를 사용하면 된다.
+  // 정의되지 않았을 경우(undefined) worker 에게 즉시 전달 된다.
+  oneof start {
+    // start_at 은 push 하고자 하는 작업이 worker 에게 전달하고자 하는 시간이다.
+    google.protobuf.Timestamp start_at = 4;
+
+    // start_after 는 push 하고자 하는 작업이 worker 에게 전달하기 전에 기다리고자 하는 시간이다.
+    google.protobuf.Duration start_after = 5;
+  }
+
+  // attempt 는 Job 이 worker 에게 Fetch 된 횟수이다.
+  uint32 attempt = 7;
+}
