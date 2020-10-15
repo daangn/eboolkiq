@@ -5,6 +5,9 @@
 *.so
 *.dylib
 
+# Playground
+cmd/test
+
 # Test binary, built with `go test -c`
 *.test
 
