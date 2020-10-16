@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package com.eboolkiq.rpc;
+package eboolkiq.rpc;
 
 option go_package = "github.com/daangn/eboolkiq/rpc";
 option java_multiple_files = true;

@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package com.eboolkiq.internal.redis;
+package eboolkiq.internal.redis;
 
 option go_package = "github.com/daangn/eboolkiq/internal/redis";
 option java_multiple_files = true;
@@ -27,7 +27,7 @@ import "job.proto";
 import "queue.proto";
 
 message JobQueue {
-  com.eboolkiq.Job job = 1;
-  com.eboolkiq.Queue queue = 2;
+  eboolkiq.Job job = 1;
+  eboolkiq.Queue queue = 2;
   google.protobuf.Timestamp start_at = 3;
 }

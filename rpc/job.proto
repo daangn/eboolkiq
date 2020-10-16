@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package com.eboolkiq.rpc;
+package eboolkiq.rpc;
 
 option go_package = "github.com/daangn/eboolkiq/rpc";
 option java_multiple_files = true;
@@ -49,22 +49,22 @@ service Job {
 // PushReq 는 Push 의 요청 메시지이다.
 message PushReq {
   // queue 는 Job 을 넣고자 하는 큐 이다.
-  com.eboolkiq.Queue queue = 1;
+  eboolkiq.Queue queue = 1;
 
   // job 은 push 하고자 하는 Job 이다.
-  com.eboolkiq.Job job = 2;
+  eboolkiq.Job job = 2;
 }
 
 // PushResp 는 Push 의 응답으로, 생성된 Job 에 대한 정보를 포함한다.
 message PushResp {
   // job 은 Push 요청에 의해 생성된 Job 이다.
-  com.eboolkiq.Job job = 1;
+  eboolkiq.Job job = 1;
 }
 
 // FetchReq 는 Fetch 의 요청 메시지이다.
 message FetchReq {
   // queue 는 Job 을 가져올 큐 이다.
-  com.eboolkiq.Queue queue = 1;
+  eboolkiq.Queue queue = 1;
 
   // waitDuration 은 현재 어떠한 작업도 없을 때 작업이 생기길 기다리는 시간이다.
   //
@@ -74,24 +74,24 @@ message FetchReq {
 
 // FetchResp 는 Fetch 의 응답으로, 작업 큐로부터 가져온 Job 에 대한 정보를 포함한다.
 message FetchResp {
-  com.eboolkiq.Job job = 1;
+  eboolkiq.Job job = 1;
 }
 
 // FetchStreamReq 는 FetchStream 의 요청 메시지이다.
 message FetchStreamReq {
   // queue 는 Job 을 가져올 큐 이다.
-  com.eboolkiq.Queue queue = 1;
+  eboolkiq.Queue queue = 1;
 }
 
 // FetchStreamResp 는 FetchStream 의 응답으로, 작업 큐로부터 가져온 Job 에 대한 정보를 포함한다.
 message FetchStreamResp {
-  com.eboolkiq.Job job = 1;
+  eboolkiq.Job job = 1;
 }
 
 // FinishReq 는 Finish 의 요청 메시지이다.
 message FinishReq {
   // job 은 worker 가 작업을 완료한 Job 이다.
-  com.eboolkiq.Job job = 1;
+  eboolkiq.Job job = 1;
 
   // success 는 Job 이 성공했는지에 대한 값이다.
   bool success = 2;
