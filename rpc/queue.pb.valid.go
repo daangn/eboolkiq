@@ -14,12 +14,6 @@
 
 package rpc
 
-import "errors"
-
-var (
-	ErrNilQueue = errors.New("eboolkiq: queue must not empty")
-)
-
 func (x *ListReq) Validate() error {
 	if x == nil {
 		return ErrNilRequest

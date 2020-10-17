@@ -14,14 +14,6 @@
 
 package rpc
 
-import (
-	"errors"
-)
-
-var (
-	ErrNilRequest = errors.New("eboolkiq: request is nil")
-)
-
 func (x *PushReq) Validate() error {
 	if x == nil {
 		return ErrNilRequest
