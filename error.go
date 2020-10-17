@@ -20,4 +20,5 @@ var (
 	ErrQueueNotFound = errors.New("eboolkiq: queue not found")
 	ErrJobNotFound   = errors.New("eboolkiq: job not found")
 	ErrEmptyQueue    = errors.New("eboolkiq: work queue is empty")
+	ErrQueueExists   = errors.New("eboolkiq: queue already exists")
 )
