@@ -16,6 +16,7 @@ package redis
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -42,7 +43,11 @@ func (r *redisQueue) GetQueue(ctx context.Context, queue string) (*pb.Queue, err
 	if err != nil {
 		return nil, err
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Println("error while closing redis connection:", err)
+		}
+	}()
 
 	return r.getQueue(conn, queue)
 }
@@ -55,7 +60,11 @@ func (r *redisQueue) PushJob(ctx context.Context, queue string, job *pb.Job) err
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Println("error while closing redis connection:", err)
+		}
+	}()
 
 	q, err := r.getQueue(conn, queue)
 	if err != nil {
@@ -71,7 +80,11 @@ func (r *redisQueue) FetchJob(ctx context.Context, queue string, waitTimeout tim
 	if err != nil {
 		return nil, err
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Println("error while closing redis connection:", err)
+		}
+	}()
 
 	q, err := r.getQueue(conn, queue)
 	if err != nil {
@@ -109,7 +122,11 @@ func (r *redisQueue) Succeed(ctx context.Context, jobId string) error {
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Println("error while closing redis connection:", err)
+		}
+	}()
 
 	job, _, err := r.getJob(conn, jobId)
 	if err != nil {
@@ -128,7 +145,11 @@ func (r *redisQueue) Failed(ctx context.Context, jobId string, errMsg string) er
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Println("error while closing redis connection:", err)
+		}
+	}()
 
 	job, queue, err := r.getJob(conn, jobId)
 	if err != nil {
@@ -146,7 +167,11 @@ func (r *redisQueue) ListQueues(ctx context.Context) ([]*pb.Queue, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Println("error while closing redis connection:", err)
+		}
+	}()
 
 	return r.listQueues(conn)
 }
@@ -179,7 +204,11 @@ func (r *redisQueue) DeleteQueue(ctx context.Context, name string) error {
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Println("error while closing redis connection:", err)
+		}
+	}()
 
 	if err := r.flushQueue(conn, name); err != nil {
 		return err
@@ -197,7 +226,11 @@ func (r *redisQueue) UpdateQueue(ctx context.Context, queue *pb.Queue) (*pb.Queu
 	if err != nil {
 		return nil, err
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Println("error while closing redis connection:", err)
+		}
+	}()
 
 	switch _, err := r.getQueue(conn, queue.Name); err {
 	case nil:
@@ -220,7 +253,11 @@ func (r *redisQueue) FlushQueue(ctx context.Context, name string) error {
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Println("error while closing redis connection:", err)
+		}
+	}()
 
 	return r.flushQueue(conn, name)
 }
@@ -230,7 +267,11 @@ func (r *redisQueue) CountJobFromQueue(ctx context.Context, name string) (uint64
 	if err != nil {
 		return 0, err
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Println("error while closing redis connection:", err)
+		}
+	}()
 
 	switch _, err := r.getQueue(conn, name); err {
 	case nil:

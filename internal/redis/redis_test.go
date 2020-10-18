@@ -16,6 +16,7 @@ package redis
 
 import (
 	"context"
+	"log"
 	"testing"
 	"time"
 
@@ -30,7 +31,11 @@ func mustCleanUpRedis(t *testing.T, pool *redis.Pool) {
 	if err != nil {
 		t.Fatal("redis clean up failed:", err)
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Println("error while closing redis connection:", err)
+		}
+	}()
 
 	if err := conn.Send("FLUSHALL"); err != nil {
 		t.Fatal("redis clean up failed:", err)
@@ -51,7 +56,11 @@ func TestRedisQueue(t *testing.T) {
 		},
 		MaxIdle: 300,
 	}
-	defer pool.Close()
+	defer func() {
+		if err := pool.Close(); err != nil {
+			log.Println("error while closing redis pool:", err)
+		}
+	}()
 
 	defer mustCleanUpRedis(t, pool)
 	db := NewRedisQueue(pool)
@@ -69,7 +78,11 @@ func testRedisQueue_GetQueue(t *testing.T, r *redisQueue) func(*testing.T) {
 	if err != nil {
 		t.Fatal("TestRedisQueue/GetQueue setup failed:", err)
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Println("error while closing redis connection:", err)
+		}
+	}()
 
 	if err := r.setQueue(conn, &pb.Queue{
 		Name:       "test",
@@ -126,7 +139,11 @@ func testRedisQueue_PushJob(t *testing.T, r *redisQueue) func(*testing.T) {
 	if err != nil {
 		t.Fatal("TestRedisQueue/PushJob setup failed:", err)
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Println("error while closing redis connection:", err)
+		}
+	}()
 
 	if err := r.setQueue(conn, &pb.Queue{
 		Name: "test",
@@ -170,7 +187,11 @@ func testRedisQueue_FetchJob(t *testing.T, r *redisQueue, timeout time.Duration)
 	if err != nil {
 		t.Fatal("TestRedisQueue/FetchJob setup failed:", err)
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Println("error while closing redis connection:", err)
+		}
+	}()
 
 	if err := r.setQueue(conn, &pb.Queue{
 		Name: "test",
@@ -265,7 +286,11 @@ func testRedisQueue_Succeed(t *testing.T, r *redisQueue) func(*testing.T) {
 	if err != nil {
 		t.Fatal("TestRedisQueue/Succeed setup failed:", err)
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Println("error while closing redis connection:", err)
+		}
+	}()
 
 	job := &pb.Job{
 		Id:          "testJobId",
@@ -315,7 +340,11 @@ func testRedisQueue_Failed(t *testing.T, r *redisQueue) func(*testing.T) {
 	if err != nil {
 		t.Fatal("TestRedisQueue/Failed setup failed:", err)
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Println("error while closing redis connection:", err)
+		}
+	}()
 
 	if err := r.setJob(conn, &pb.Queue{
 		Name:     "test1",
