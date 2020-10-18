@@ -140,6 +140,111 @@ func (r *redisQueue) Failed(ctx context.Context, jobId string, errMsg string) er
 	return r.failJob(conn, queue.Name, job)
 }
 
+func (r *redisQueue) ListQueues(ctx context.Context) ([]*eboolkiq.Queue, error) {
+	conn, err := r.pool.GetContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	return r.listQueues(conn)
+}
+
+func (r *redisQueue) CreateQueue(ctx context.Context, queue *eboolkiq.Queue) (*eboolkiq.Queue, error) {
+	conn, err := r.pool.GetContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	switch _, err := r.getQueue(conn, queue.Name); err {
+	case eboolkiq.ErrQueueNotFound:
+		// queue not exists. ready to create queue
+	case nil:
+		return nil, eboolkiq.ErrQueueExists
+	default:
+		// unexpected error raised
+		return nil, err
+	}
+
+	if err := r.setQueue(conn, queue); err != nil {
+		return nil, err
+	}
+	return queue, nil
+}
+
+func (r *redisQueue) DeleteQueue(ctx context.Context, name string) error {
+	conn, err := r.pool.GetContext(ctx)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	if err := r.flushQueue(conn, name); err != nil {
+		return err
+	}
+
+	if err := r.deleteQueue(conn, name); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *redisQueue) UpdateQueue(ctx context.Context, queue *eboolkiq.Queue) (*eboolkiq.Queue, error) {
+	conn, err := r.pool.GetContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	switch _, err := r.getQueue(conn, queue.Name); err {
+	case nil:
+		// queue exists. ready to update
+	case eboolkiq.ErrQueueNotFound:
+		return nil, err
+	default:
+		// unexpected error raised
+		return nil, err
+	}
+
+	if err := r.setQueue(conn, queue); err != nil {
+		return nil, err
+	}
+	return queue, nil
+}
+
+func (r *redisQueue) FlushQueue(ctx context.Context, name string) error {
+	conn, err := r.pool.GetContext(ctx)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	return r.flushQueue(conn, name)
+}
+
+func (r *redisQueue) CountJobFromQueue(ctx context.Context, name string) (uint64, error) {
+	conn, err := r.pool.GetContext(ctx)
+	if err != nil {
+		return 0, err
+	}
+	defer conn.Close()
+
+	switch _, err := r.getQueue(conn, name); err {
+	case nil:
+		// queue exists. ready to count
+	case eboolkiq.ErrQueueNotFound:
+		// queue not exists
+		return 0, err
+	default:
+		// unexpected error raised
+		return 0, err
+	}
+
+	return r.countJobFromQueue(conn, name)
+}
+
 func (r *redisQueue) getQueue(conn redis.Conn, queue string) (*eboolkiq.Queue, error) {
 	queueBytes, err := redis.Bytes(conn.Do("GET", kvQueuePrefix+queue))
 	if err != nil {
@@ -289,4 +394,51 @@ func (r *redisQueue) setQueue(conn redis.Conn, queue *eboolkiq.Queue) error {
 		return err
 	}
 	return nil
+}
+
+func (r *redisQueue) listQueues(conn redis.Conn) ([]*eboolkiq.Queue, error) {
+	queueNames, err := redis.Strings(conn.Do("KEYS", kvQueuePrefix+"*"))
+	if err != nil {
+		return nil, err
+	}
+
+	keys := make([]interface{}, len(queueNames))
+	for i := range queueNames {
+		keys[i] = queueNames[i]
+	}
+
+	queueByteSlices, err := redis.ByteSlices(conn.Do("MGET", keys...))
+	if err != nil {
+		return nil, err
+	}
+
+	queues := make([]*eboolkiq.Queue, len(queueByteSlices))
+	for i, queueByte := range queueByteSlices {
+		var queue eboolkiq.Queue
+		if err := proto.Unmarshal(queueByte, &queue); err != nil {
+			return nil, err
+		}
+		queues[i] = &queue
+	}
+
+	return queues, nil
+}
+
+func (r *redisQueue) deleteQueue(conn redis.Conn, name string) error {
+	if _, err := conn.Do("DEL", kvQueuePrefix+name); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *redisQueue) flushQueue(conn redis.Conn, name string) error {
+	if _, err := conn.Do("DEL", queuePrefix+name); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *redisQueue) countJobFromQueue(conn redis.Conn, name string) (uint64, error) {
+	return redis.Uint64(conn.Do("LLEN", queuePrefix+name))
 }
