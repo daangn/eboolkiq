@@ -113,8 +113,6 @@ message FlushReq {
 
 // FlushResp 는 Flush 의 응답 메시지이다.
 message FlushResp {
-  // flushed 는 Flush 된 Job 의 개수이다.
-  uint64 flushed = 1;
 }
 
 // CountJobReq 는 CountJob 을 요청하기 위한 메시지이다.

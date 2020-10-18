@@ -48,7 +48,7 @@ type db interface {
 	// FlushQueue 는 큐에 대기중인 모든 Job 을 지워준다.
 	//
 	// 큐를 찾지 못하였을 경우 eboolkiq.ErrQueueNotFound 에러를 반환한다.
-	FlushQueue(ctx context.Context, name string) (uint64, error)
+	FlushQueue(ctx context.Context, name string) error
 
 	// CountJobFromQueue 는 큐에 대기중인 Job 의 개수를 세어준다.
 	//

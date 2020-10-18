@@ -155,7 +155,7 @@ func (h *handler) Flush(ctx context.Context, req *rpc.FlushReq) (*rpc.FlushResp,
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	flushed, err := h.db.FlushQueue(ctx, req.Name)
+	err := h.db.FlushQueue(ctx, req.Name)
 	if err != nil {
 		switch err {
 		case context.Canceled:
@@ -169,7 +169,7 @@ func (h *handler) Flush(ctx context.Context, req *rpc.FlushReq) (*rpc.FlushResp,
 		}
 	}
 
-	return &rpc.FlushResp{Flushed: flushed}, nil
+	return &rpc.FlushResp{}, nil
 }
 
 func (h *handler) CountJob(ctx context.Context, req *rpc.CountJobReq) (*rpc.CountJobResp, error) {
