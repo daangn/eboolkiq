@@ -17,6 +17,8 @@ package eboolkiq
 import (
 	"context"
 	"time"
+
+	"github.com/daangn/eboolkiq/pb"
 )
 
 type Queuer interface {
@@ -24,17 +26,17 @@ type Queuer interface {
 	//
 	// queue 가 존재할 경우, 큐의 설정을 포함한 *Queue 를 반환하며,
 	// queue 가 존재하지 않을 경우, ErrQueueNotFound 에러를 반환한다.
-	GetQueue(ctx context.Context, queue string) (*Queue, error)
+	GetQueue(ctx context.Context, queue string) (*pb.Queue, error)
 
 	// PushJob 은 queue 에 job 을 추가해 준다.
 	//
 	// queue 는 항상 존재해야 한다.
-	PushJob(ctx context.Context, queue string, job *Job) error
+	PushJob(ctx context.Context, queue string, job *pb.Job) error
 
 	// FetchJob 은 queue 로부터 job 을 가져온다.
 	//
 	// queue 는 항상 존재해야 한다. 또한 queue 가 비어 있을 경우 waitTimeout 시간만큼 기다린다.
-	FetchJob(ctx context.Context, queue string, waitTimeout time.Duration) (*Job, error)
+	FetchJob(ctx context.Context, queue string, waitTimeout time.Duration) (*pb.Job, error)
 
 	// Succeed 는 job 을 Queue 로부터 없애준다.
 	//

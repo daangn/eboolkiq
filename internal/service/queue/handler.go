@@ -23,7 +23,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/daangn/eboolkiq"
-	"github.com/daangn/eboolkiq/rpc"
+	"github.com/daangn/eboolkiq/pb/rpc"
 )
 
 type handler struct {

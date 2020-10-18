@@ -7,3 +7,9 @@ do
         --go_opt=paths=source_relative \
         "${f}"
 done
+
+for f in **/*.pb.go
+do
+  mkdir -p "$(dirname "$f")"
+  mv "${f}" "${f//proto/pb}"
+done

@@ -12,22 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-syntax = "proto3";
+package rpc
 
-package eboolkiq.internal.redis;
+import "errors"
 
-option go_package = "github.com/daangn/eboolkiq/internal/redis";
-option java_multiple_files = true;
-option java_outer_classname = "ModelProto";
-option java_package = "com.eboolkiq.internal.redis";
-
-import "google/protobuf/timestamp.proto";
-
-import "proto/job.proto";
-import "proto/queue.proto";
-
-message JobQueue {
-  eboolkiq.Job job = 1;
-  eboolkiq.Queue queue = 2;
-  google.protobuf.Timestamp start_at = 3;
-}
+var (
+	ErrNilRequest = errors.New("eboolkiq: request is nil")
+	ErrNilQueue   = errors.New("eboolkiq: queue must not empty")
+)

@@ -23,6 +23,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/daangn/eboolkiq"
+	"github.com/daangn/eboolkiq/pb"
 )
 
 type redisQueue struct {
@@ -36,7 +37,7 @@ func NewRedisQueue(pool *redis.Pool) *redisQueue {
 }
 
 // GetQueue get queue from redis using GET command.
-func (r *redisQueue) GetQueue(ctx context.Context, queue string) (*eboolkiq.Queue, error) {
+func (r *redisQueue) GetQueue(ctx context.Context, queue string) (*pb.Queue, error) {
 	conn, err := r.pool.GetContext(ctx)
 	if err != nil {
 		return nil, err
@@ -49,7 +50,7 @@ func (r *redisQueue) GetQueue(ctx context.Context, queue string) (*eboolkiq.Queu
 // PushJob push job to redis queue using LPUSH command.
 //
 // job.Id must not empty.
-func (r *redisQueue) PushJob(ctx context.Context, queue string, job *eboolkiq.Job) error {
+func (r *redisQueue) PushJob(ctx context.Context, queue string, job *pb.Job) error {
 	conn, err := r.pool.GetContext(ctx)
 	if err != nil {
 		return err
@@ -65,7 +66,7 @@ func (r *redisQueue) PushJob(ctx context.Context, queue string, job *eboolkiq.Jo
 }
 
 // FetchJob fetch job from redis queue using BRPOP command.
-func (r *redisQueue) FetchJob(ctx context.Context, queue string, waitTimeout time.Duration) (*eboolkiq.Job, error) {
+func (r *redisQueue) FetchJob(ctx context.Context, queue string, waitTimeout time.Duration) (*pb.Job, error) {
 	conn, err := r.pool.GetContext(ctx)
 	if err != nil {
 		return nil, err
@@ -77,7 +78,7 @@ func (r *redisQueue) FetchJob(ctx context.Context, queue string, waitTimeout tim
 		return nil, err
 	}
 
-	var job *eboolkiq.Job
+	var job *pb.Job
 	switch {
 	case waitTimeout == 0:
 		job, err = r.popJob(conn, q.Name)
@@ -140,7 +141,7 @@ func (r *redisQueue) Failed(ctx context.Context, jobId string, errMsg string) er
 	return r.failJob(conn, queue.Name, job)
 }
 
-func (r *redisQueue) ListQueues(ctx context.Context) ([]*eboolkiq.Queue, error) {
+func (r *redisQueue) ListQueues(ctx context.Context) ([]*pb.Queue, error) {
 	conn, err := r.pool.GetContext(ctx)
 	if err != nil {
 		return nil, err
@@ -150,7 +151,7 @@ func (r *redisQueue) ListQueues(ctx context.Context) ([]*eboolkiq.Queue, error) 
 	return r.listQueues(conn)
 }
 
-func (r *redisQueue) CreateQueue(ctx context.Context, queue *eboolkiq.Queue) (*eboolkiq.Queue, error) {
+func (r *redisQueue) CreateQueue(ctx context.Context, queue *pb.Queue) (*pb.Queue, error) {
 	conn, err := r.pool.GetContext(ctx)
 	if err != nil {
 		return nil, err
@@ -191,7 +192,7 @@ func (r *redisQueue) DeleteQueue(ctx context.Context, name string) error {
 	return nil
 }
 
-func (r *redisQueue) UpdateQueue(ctx context.Context, queue *eboolkiq.Queue) (*eboolkiq.Queue, error) {
+func (r *redisQueue) UpdateQueue(ctx context.Context, queue *pb.Queue) (*pb.Queue, error) {
 	conn, err := r.pool.GetContext(ctx)
 	if err != nil {
 		return nil, err
@@ -245,13 +246,13 @@ func (r *redisQueue) CountJobFromQueue(ctx context.Context, name string) (uint64
 	return r.countJobFromQueue(conn, name)
 }
 
-func (r *redisQueue) getQueue(conn redis.Conn, queue string) (*eboolkiq.Queue, error) {
+func (r *redisQueue) getQueue(conn redis.Conn, queue string) (*pb.Queue, error) {
 	queueBytes, err := redis.Bytes(conn.Do("GET", kvQueuePrefix+queue))
 	if err != nil {
 		return nil, eboolkiq.ErrQueueNotFound
 	}
 
-	var q eboolkiq.Queue
+	var q pb.Queue
 	if err := proto.Unmarshal(queueBytes, &q); err != nil {
 		return nil, err
 	}
@@ -259,7 +260,7 @@ func (r *redisQueue) getQueue(conn redis.Conn, queue string) (*eboolkiq.Queue, e
 	return &q, nil
 }
 
-func (r *redisQueue) pushJob(conn redis.Conn, queueName string, job *eboolkiq.Job) error {
+func (r *redisQueue) pushJob(conn redis.Conn, queueName string, job *pb.Job) error {
 	jobBytes, err := proto.Marshal(job)
 	if err != nil {
 		return err
@@ -273,7 +274,7 @@ func (r *redisQueue) pushJob(conn redis.Conn, queueName string, job *eboolkiq.Jo
 	return nil
 }
 
-func (r *redisQueue) popJob(conn redis.Conn, queueName string) (*eboolkiq.Job, error) {
+func (r *redisQueue) popJob(conn redis.Conn, queueName string) (*pb.Job, error) {
 	jobBytes, err := redis.Bytes(conn.Do("RPOP", queuePrefix+queueName))
 	if err != nil {
 		switch err {
@@ -284,14 +285,14 @@ func (r *redisQueue) popJob(conn redis.Conn, queueName string) (*eboolkiq.Job, e
 		}
 	}
 
-	var job eboolkiq.Job
+	var job pb.Job
 	if err := proto.Unmarshal(jobBytes, &job); err != nil {
 		return nil, err
 	}
 	return &job, nil
 }
 
-func (r *redisQueue) bpopJob(conn redis.Conn, queueName string, timeout time.Duration) (*eboolkiq.Job, error) {
+func (r *redisQueue) bpopJob(conn redis.Conn, queueName string, timeout time.Duration) (*pb.Job, error) {
 	// brpop timeout 단위가 1초 단위기 때문에 0 이 되는 것을 방지하기 위함
 	if timeout > 0 && timeout < time.Second {
 		timeout = time.Second
@@ -311,14 +312,14 @@ func (r *redisQueue) bpopJob(conn redis.Conn, queueName string, timeout time.Dur
 		return nil, eboolkiq.ErrEmptyQueue
 	}
 
-	var job eboolkiq.Job
+	var job pb.Job
 	if err := proto.Unmarshal(bytes[1], &job); err != nil {
 		return nil, err
 	}
 	return &job, nil
 }
 
-func (r *redisQueue) setJob(conn redis.Conn, q *eboolkiq.Queue, job *eboolkiq.Job) error {
+func (r *redisQueue) setJob(conn redis.Conn, q *pb.Queue, job *pb.Job) error {
 	model := JobQueue{
 		Job:     job,
 		Queue:   q,
@@ -338,7 +339,7 @@ func (r *redisQueue) setJob(conn redis.Conn, q *eboolkiq.Queue, job *eboolkiq.Jo
 	return nil
 }
 
-func (r *redisQueue) getJob(conn redis.Conn, jobId string) (*eboolkiq.Job, *eboolkiq.Queue, error) {
+func (r *redisQueue) getJob(conn redis.Conn, jobId string) (*pb.Job, *pb.Queue, error) {
 	modelBytes, err := redis.Bytes(conn.Do("GET", kvWorkingPrefix+jobId))
 	if err != nil {
 		switch err {
@@ -369,7 +370,7 @@ func (r *redisQueue) deleteJob(conn redis.Conn, jobId string) error {
 	return nil
 }
 
-func (r *redisQueue) failJob(conn redis.Conn, queueName string, job *eboolkiq.Job) error {
+func (r *redisQueue) failJob(conn redis.Conn, queueName string, job *pb.Job) error {
 	jobBytes, err := proto.Marshal(job)
 	if err != nil {
 		return err
@@ -383,7 +384,7 @@ func (r *redisQueue) failJob(conn redis.Conn, queueName string, job *eboolkiq.Jo
 	return nil
 }
 
-func (r *redisQueue) setQueue(conn redis.Conn, queue *eboolkiq.Queue) error {
+func (r *redisQueue) setQueue(conn redis.Conn, queue *pb.Queue) error {
 	queueBytes, err := proto.Marshal(queue)
 	if err != nil {
 		return err
@@ -396,7 +397,7 @@ func (r *redisQueue) setQueue(conn redis.Conn, queue *eboolkiq.Queue) error {
 	return nil
 }
 
-func (r *redisQueue) listQueues(conn redis.Conn) ([]*eboolkiq.Queue, error) {
+func (r *redisQueue) listQueues(conn redis.Conn) ([]*pb.Queue, error) {
 	queueNames, err := redis.Strings(conn.Do("KEYS", kvQueuePrefix+"*"))
 	if err != nil {
 		return nil, err
@@ -412,9 +413,9 @@ func (r *redisQueue) listQueues(conn redis.Conn) ([]*eboolkiq.Queue, error) {
 		return nil, err
 	}
 
-	queues := make([]*eboolkiq.Queue, len(queueByteSlices))
+	queues := make([]*pb.Queue, len(queueByteSlices))
 	for i, queueByte := range queueByteSlices {
-		var queue eboolkiq.Queue
+		var queue pb.Queue
 		if err := proto.Unmarshal(queueByte, &queue); err != nil {
 			return nil, err
 		}

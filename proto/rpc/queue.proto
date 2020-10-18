@@ -16,12 +16,12 @@ syntax = "proto3";
 
 package eboolkiq.rpc;
 
-option go_package = "github.com/daangn/eboolkiq/rpc";
+option go_package = "github.com/daangn/eboolkiq/pb/rpc";
 option java_multiple_files = true;
 option java_outer_classname = "QueueProto";
 option java_package = "com.eboolkiq.rpc";
 
-import "queue.proto";
+import "proto/queue.proto";
 
 service Queue {
   // List rpc 는 eboolkiq 서버가 관리중인 모든 큐를 조회한다.

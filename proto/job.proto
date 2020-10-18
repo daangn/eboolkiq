@@ -16,7 +16,7 @@ syntax = "proto3";
 
 package eboolkiq;
 
-option go_package = "github.com/daangn/eboolkiq";
+option go_package = "github.com/daangn/eboolkiq/pb";
 option java_multiple_files = true;
 option java_outer_classname = "JobProto";
 option java_package = "com.eboolkiq";

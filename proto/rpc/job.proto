@@ -16,15 +16,15 @@ syntax = "proto3";
 
 package eboolkiq.rpc;
 
-option go_package = "github.com/daangn/eboolkiq/rpc";
+option go_package = "github.com/daangn/eboolkiq/pb/rpc";
 option java_multiple_files = true;
 option java_outer_classname = "JobProto";
 option java_package = "com.eboolkiq.rpc";
 
 import "google/protobuf/duration.proto";
 import "google/protobuf/wrappers.proto";
-import "queue.proto";
-import "job.proto";
+import "proto/queue.proto";
+import "proto/job.proto";
 
 service Job {
   // Push rpc 는 작업 큐에 작업을 넣기 위한 rpc 이다.

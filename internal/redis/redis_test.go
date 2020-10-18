@@ -22,6 +22,7 @@ import (
 	"github.com/gomodule/redigo/redis"
 
 	"github.com/daangn/eboolkiq"
+	"github.com/daangn/eboolkiq/pb"
 )
 
 var _ eboolkiq.Queuer = (*redisQueue)(nil)
@@ -72,7 +73,7 @@ func testRedisQueue_GetQueue(t *testing.T, r *redisQueue) func(*testing.T) {
 	}
 	defer conn.Close()
 
-	if err := r.setQueue(conn, &eboolkiq.Queue{
+	if err := r.setQueue(conn, &pb.Queue{
 		Name:       "test",
 		AutoFinish: false,
 		MaxRetry:   -1,
@@ -85,11 +86,11 @@ func testRedisQueue_GetQueue(t *testing.T, r *redisQueue) func(*testing.T) {
 
 		tests := []struct {
 			queue string
-			q     *eboolkiq.Queue
+			q     *pb.Queue
 			err   error
 		}{{
 			queue: "test",
-			q: &eboolkiq.Queue{
+			q: &pb.Queue{
 				Name:       "test",
 				AutoFinish: false,
 				Timeout:    nil,
@@ -129,7 +130,7 @@ func testRedisQueue_PushJob(t *testing.T, r *redisQueue) func(*testing.T) {
 	}
 	defer conn.Close()
 
-	if err := r.setQueue(conn, &eboolkiq.Queue{
+	if err := r.setQueue(conn, &pb.Queue{
 		Name: "test",
 	}); err != nil {
 		t.Fatal("TestRedisQueue/PushJob setup failed:", err)
@@ -140,11 +141,11 @@ func testRedisQueue_PushJob(t *testing.T, r *redisQueue) func(*testing.T) {
 
 		tests := []struct {
 			queue string
-			job   *eboolkiq.Job
+			job   *pb.Job
 			err   error
 		}{{
 			queue: "test",
-			job: &eboolkiq.Job{
+			job: &pb.Job{
 				Id:          "testjobid",
 				Description: "foo bar",
 			},
@@ -173,20 +174,20 @@ func testRedisQueue_FetchJob(t *testing.T, r *redisQueue, timeout time.Duration)
 	}
 	defer conn.Close()
 
-	if err := r.setQueue(conn, &eboolkiq.Queue{
+	if err := r.setQueue(conn, &pb.Queue{
 		Name: "test",
 	}); err != nil {
 		t.Fatal("TestRedisQueue/FetchJob setup failed:", err)
 	}
 
-	if err := r.setQueue(conn, &eboolkiq.Queue{
+	if err := r.setQueue(conn, &pb.Queue{
 		Name:       "autoFinish",
 		AutoFinish: true,
 	}); err != nil {
 		t.Fatal("TestRedisQueue/FetchJob setup failed:", err)
 	}
 
-	if err := r.pushJob(conn, "test", &eboolkiq.Job{
+	if err := r.pushJob(conn, "test", &pb.Job{
 		Id:          "testjobid",
 		Description: "foo bar",
 		Attempt:     0,
@@ -194,7 +195,7 @@ func testRedisQueue_FetchJob(t *testing.T, r *redisQueue, timeout time.Duration)
 		t.Fatal("TestRedisQueue/FetchJob setup failed:", err)
 	}
 
-	if err := r.pushJob(conn, "autoFinish", &eboolkiq.Job{
+	if err := r.pushJob(conn, "autoFinish", &pb.Job{
 		Id:          "autoFinishJobId",
 		Description: "foo bar",
 		Attempt:     0,
@@ -207,11 +208,11 @@ func testRedisQueue_FetchJob(t *testing.T, r *redisQueue, timeout time.Duration)
 
 		tests := []struct {
 			queue string
-			job   *eboolkiq.Job
+			job   *pb.Job
 			err   error
 		}{{
 			queue: "test",
-			job: &eboolkiq.Job{
+			job: &pb.Job{
 				Id:          "testjobid",
 				Description: "foo bar",
 				Attempt:     1,
@@ -219,7 +220,7 @@ func testRedisQueue_FetchJob(t *testing.T, r *redisQueue, timeout time.Duration)
 			err: nil,
 		}, {
 			queue: "autoFinish",
-			job: &eboolkiq.Job{
+			job: &pb.Job{
 				Id:          "autoFinishJobId",
 				Description: "foo bar",
 				Attempt:     1,
@@ -268,13 +269,13 @@ func testRedisQueue_Succeed(t *testing.T, r *redisQueue) func(*testing.T) {
 	}
 	defer conn.Close()
 
-	job := &eboolkiq.Job{
+	job := &pb.Job{
 		Id:          "testJobId",
 		Description: "foo bar",
 		Attempt:     1,
 	}
 
-	queue := &eboolkiq.Queue{
+	queue := &pb.Queue{
 		Name:       "test",
 		AutoFinish: false,
 		Timeout:    nil,
@@ -318,10 +319,10 @@ func testRedisQueue_Failed(t *testing.T, r *redisQueue) func(*testing.T) {
 	}
 	defer conn.Close()
 
-	if err := r.setJob(conn, &eboolkiq.Queue{
+	if err := r.setJob(conn, &pb.Queue{
 		Name:     "test1",
 		MaxRetry: 0,
-	}, &eboolkiq.Job{
+	}, &pb.Job{
 		Id:          "retryJob",
 		Description: "foo bar",
 		Attempt:     1,
@@ -329,10 +330,10 @@ func testRedisQueue_Failed(t *testing.T, r *redisQueue) func(*testing.T) {
 		t.Fatal("TestRedisQueue/Failed setup failed:", err)
 	}
 
-	if err := r.setJob(conn, &eboolkiq.Queue{
+	if err := r.setJob(conn, &pb.Queue{
 		Name:     "test2",
 		MaxRetry: 1,
-	}, &eboolkiq.Job{
+	}, &pb.Job{
 		Id:          "deadJob",
 		Description: "foo bar test",
 		Attempt:     1,
