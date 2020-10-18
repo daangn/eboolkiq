@@ -22,9 +22,10 @@ import (
 	"github.com/bwmarrin/snowflake"
 	redigo "github.com/gomodule/redigo/redis"
 
+	"github.com/daangn/eboolkiq"
 	"github.com/daangn/eboolkiq/internal/redis"
 	"github.com/daangn/eboolkiq/internal/server/grpc"
-	"github.com/daangn/eboolkiq/internal/service/job"
+	"github.com/daangn/eboolkiq/pb/rpc"
 )
 
 var cfg config
@@ -58,10 +59,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	handler := job.NewHandler(redisPool, node)
+	jobSvc := eboolkiq.NewJobSvcHandler(redisPool, node)
 	grpcServer := grpc.NewGrpcServer()
 
-	job.Register(grpcServer, handler)
+	rpc.RegisterJobServer(grpcServer, jobSvc)
 
 	lis, err := net.Listen("tcp", ":80")
 	if err != nil {

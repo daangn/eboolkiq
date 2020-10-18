@@ -25,8 +25,6 @@ import (
 	"github.com/daangn/eboolkiq/pb"
 )
 
-var _ eboolkiq.Queuer = (*redisQueue)(nil)
-
 func mustCleanUpRedis(t *testing.T, pool *redis.Pool) {
 	conn, err := pool.GetContext(context.Background())
 	if err != nil {
