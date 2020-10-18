@@ -50,7 +50,11 @@ func main() {
 		},
 		MaxIdle: 300,
 	}
-	defer pool.Close()
+	defer func() {
+		if err := pool.Close(); err != nil {
+			log.Println("error while close redis pool:", err)
+		}
+	}()
 
 	redisPool := redis.NewRedisQueue(pool)
 
@@ -68,7 +72,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer lis.Close()
+	defer func() {
+		if err := lis.Close(); err != nil {
+			log.Println("error while close tcp listener:", err)
+		}
+	}()
 
 	log.Println("server listening on", lis.Addr())
 	if err := grpcServer.Serve(lis); err != nil {
