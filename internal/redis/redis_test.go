@@ -71,6 +71,12 @@ func TestRedisQueue(t *testing.T) {
 	t.Run("FetchJob/1ms", testRedisQueue_FetchJob(t, db, time.Second))
 	t.Run("Succeed", testRedisQueue_Succeed(t, db))
 	t.Run("Failed", testRedisQueue_Failed(t, db))
+	t.Run("ListQueues", testRedisQueue_ListQueues(t, db))
+	t.Run("CreateQueue", testRedisQueue_CreateQueue(t, db))
+	t.Run("DeleteQueue", testRedisQueue_DeleteQueue(t, db))
+	t.Run("UpdateQueue", testRedisQueue_UpdateQueue(t, db))
+	t.Run("FlushQueue", testRedisQueue_FlushQueue(t, db))
+	t.Run("CountJobFromQueue", testRedisQueue_CountJobFromQueue(t, db))
 }
 
 func testRedisQueue_GetQueue(t *testing.T, r *redisQueue) func(*testing.T) {
@@ -391,6 +397,365 @@ func testRedisQueue_Failed(t *testing.T, r *redisQueue) func(*testing.T) {
 					"expected: %v\n"+
 					"actual:   %v\n"+
 					"with:     %+v\n", test.err, err, test)
+			}
+		}
+	}
+}
+
+func testRedisQueue_ListQueues(t *testing.T, r *redisQueue) func(*testing.T) {
+	conn := r.pool.Get()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Println("error while closing redis connection:", err)
+		}
+	}()
+
+	testQueues := []*pb.Queue{
+		{Name: "foo"},
+		{Name: "bar"},
+		{Name: "baz"},
+		{Name: "test"},
+	}
+
+	for _, q := range testQueues {
+		if err := r.setQueue(conn, q); err != nil {
+			t.Fatal("TestRedisQueue/ListQueue setup failed:", err)
+		}
+	}
+
+	return func(t *testing.T) {
+		defer mustCleanUpRedis(t, r.pool)
+
+		queues, err := r.ListQueues(context.Background())
+		if err != nil {
+			t.Errorf("test failed\n"+
+				"expected: %v\n"+
+				"actual:   %v\n", nil, err)
+			return
+		}
+
+	OUTER:
+		for _, testQueue := range testQueues {
+			for _, queue := range queues {
+				if testQueue.String() == queue.String() {
+					continue OUTER
+				}
+			}
+			t.Errorf("test failed\n"+
+				"expected: %v\n"+
+				"actual:   %v\n", testQueues, queues)
+			break OUTER
+		}
+	}
+}
+
+func testRedisQueue_CreateQueue(t *testing.T, r *redisQueue) func(*testing.T) {
+	conn := r.pool.Get()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Println("error while closing redis connection:", err)
+		}
+	}()
+
+	testQueues := []*pb.Queue{
+		{Name: "conflict"},
+	}
+
+	for _, q := range testQueues {
+		if err := r.setQueue(conn, q); err != nil {
+			t.Fatal("TestRedisQueue/CreateQueue setup failed:", err)
+		}
+	}
+
+	return func(t *testing.T) {
+		defer mustCleanUpRedis(t, r.pool)
+
+		tests := []struct {
+			queue *pb.Queue
+			err   error
+		}{{
+			queue: &pb.Queue{Name: "foo"},
+			err:   nil,
+		}, {
+			queue: &pb.Queue{Name: "conflict"},
+			err:   eboolkiq.ErrQueueExists,
+		}}
+
+		for _, test := range tests {
+			queue, err := r.CreateQueue(context.Background(), test.queue)
+
+			if err != test.err {
+				t.Errorf("test failed\n"+
+					"expected: %v\n"+
+					"actual:   %v\n"+
+					"with:     %v\n", test.err, err, test.queue)
+			}
+
+			if err != nil {
+				continue
+			}
+
+			if queue.String() != test.queue.String() {
+				t.Errorf("test failed\n"+
+					"expected: %v\n"+
+					"actual:   %v\n", test.queue, queue)
+			}
+		}
+	}
+}
+
+func testRedisQueue_DeleteQueue(t *testing.T, r *redisQueue) func(*testing.T) {
+	conn := r.pool.Get()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Println("error while closing redis connection:", err)
+		}
+	}()
+
+	testQueues := []*pb.Queue{
+		{Name: "foo"},
+	}
+
+	for _, queue := range testQueues {
+		if err := r.setQueue(conn, queue); err != nil {
+			t.Fatal("TestRedisQueue/DeleteQueue setup failed:", err)
+		}
+	}
+
+	return func(t *testing.T) {
+		defer mustCleanUpRedis(t, r.pool)
+
+		tests := []struct {
+			name string
+			err  error
+		}{{
+			name: "foo",
+			err:  nil,
+		}, {
+			name: "unknown",
+			err:  eboolkiq.ErrQueueNotFound,
+		}}
+
+		for _, test := range tests {
+			if err := r.DeleteQueue(context.Background(), test.name); err != test.err {
+				t.Errorf("test failed\n"+
+					"expected: %v\n"+
+					"actual:   %v\n"+
+					"with:     %v\n", test.err, err, test.name)
+			}
+		}
+	}
+}
+
+func testRedisQueue_UpdateQueue(t *testing.T, r *redisQueue) func(*testing.T) {
+	conn := r.pool.Get()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Println("error while closing redis connection:", err)
+		}
+	}()
+
+	if err := r.setQueue(conn, &pb.Queue{Name: "test"}); err != nil {
+		t.Fatal("TestRedisQueue/UpdateQueue setup failed:", err)
+	}
+
+	return func(t *testing.T) {
+		defer mustCleanUpRedis(t, r.pool)
+
+		tests := []struct {
+			queue *pb.Queue
+			err   error
+		}{
+			{
+				queue: &pb.Queue{Name: "test", AutoFinish: true},
+				err:   nil,
+			}, {
+				queue: &pb.Queue{Name: "unknown"},
+				err:   eboolkiq.ErrQueueNotFound,
+			},
+		}
+
+		for _, test := range tests {
+			q, err := r.UpdateQueue(context.Background(), test.queue)
+			if err != test.err {
+				t.Errorf("test failed\n"+
+					"expected: %v\n"+
+					"actual:   %v\n"+
+					"with:     %v\n", test.err, err, test.queue)
+			}
+
+			if err != nil {
+				continue
+			}
+
+			if q.String() != test.queue.String() {
+				t.Errorf("test failed\n"+
+					"expected: %v\n"+
+					"actual:   %v\n", test.queue, q)
+			}
+		}
+	}
+}
+
+func testRedisQueue_FlushQueue(t *testing.T, r *redisQueue) func(*testing.T) {
+	conn := r.pool.Get()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Println("error while closing redis connection:", err)
+		}
+	}()
+
+	if err := r.setQueue(conn, &pb.Queue{Name: "test"}); err != nil {
+		t.Fatal("TestRedisQueue/FlushQueue setup failed:", err)
+	}
+
+	jobs := []*pb.Job{
+		{
+			Id:          "foo",
+			Description: "something foo",
+		}, {
+			Id:          "bar",
+			Description: "something bar",
+		}, {
+			Id:          "baz",
+			Description: "something baz",
+		},
+	}
+
+	for _, job := range jobs {
+		if err := r.pushJob(conn, "test", job); err != nil {
+			t.Fatal("TestRedisQueue/FlushQueue setup failed:", err)
+		}
+	}
+
+	return func(t *testing.T) {
+		defer mustCleanUpRedis(t, r.pool)
+
+		tests := []struct {
+			name string
+			err  error
+		}{
+			{
+				name: "test",
+				err:  nil,
+			}, {
+				name: "unknown",
+				err:  eboolkiq.ErrQueueNotFound,
+			},
+		}
+
+		for _, test := range tests {
+			err := r.FlushQueue(context.Background(), test.name)
+			if err != test.err {
+				t.Errorf("test failed\n"+
+					"expected: %v\n"+
+					"actual:   %v\n"+
+					"with:     %v\n", test.err, err, test.name)
+			}
+
+			if err != nil {
+				continue
+			}
+
+			if n, err := r.CountJobFromQueue(context.Background(), test.name); err != nil {
+				t.Errorf("test failed\n"+
+					"expected: %v\n"+
+					"actual:   %v\n"+
+					"with:     %v\n", nil, err, test.name)
+			} else {
+				if n != 0 {
+					t.Errorf("test failed\n"+
+						"expected: %v\n"+
+						"actual:   %v\n"+
+						"with:     %v\n", 0, n, test.name)
+				}
+			}
+		}
+	}
+}
+
+func testRedisQueue_CountJobFromQueue(t *testing.T, r *redisQueue) func(*testing.T) {
+	conn := r.pool.Get()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Println("error while closing redis connection:", err)
+		}
+	}()
+
+	testQueues := []*pb.Queue{
+		{Name: "foo"},
+		{Name: "bar"},
+		{Name: "baz"},
+	}
+
+	for _, queue := range testQueues {
+		if err := r.setQueue(conn, queue); err != nil {
+			t.Fatal("TestRedisQueue/CountJobFromQueue setup failed:", err)
+		}
+	}
+
+	jobs := []*pb.Job{
+		{Id: "foo_1", Description: "foo"},
+		{Id: "foo_2", Description: "foo"},
+		{Id: "foo_3", Description: "foo"},
+		{Id: "bar_1", Description: "bar"},
+		{Id: "bar_2", Description: "bar"},
+		{Id: "baz_1", Description: "baz"},
+		{Id: "baz_2", Description: "baz"},
+		{Id: "baz_3", Description: "baz"},
+		{Id: "baz_4", Description: "baz"},
+	}
+
+	for _, job := range jobs {
+		if err := r.pushJob(conn, job.Description, job); err != nil {
+			t.Fatal("TestRedisQueue/CountJobFromQueue setup failed:", err)
+		}
+	}
+
+	return func(t *testing.T) {
+		defer mustCleanUpRedis(t, r.pool)
+
+		tests := []struct {
+			name string
+			err  error
+			n    uint64
+		}{
+			{
+				name: "foo",
+				err:  nil,
+				n:    3,
+			}, {
+				name: "bar",
+				err:  nil,
+				n:    2,
+			}, {
+				name: "baz",
+				err:  nil,
+				n:    4,
+			}, {
+				name: "unknown",
+				err:  eboolkiq.ErrQueueNotFound,
+			},
+		}
+
+		for _, test := range tests {
+			n, err := r.CountJobFromQueue(context.Background(), test.name)
+			if err != test.err {
+				t.Errorf("test failed\n"+
+					"expected: %v\n"+
+					"actual:   %v\n"+
+					"with:     %v\n", test.err, err, test)
+			}
+
+			if err != nil {
+				continue
+			}
+
+			if n != test.n {
+				t.Errorf("test failed\n"+
+					"expected: %v\n"+
+					"actual:   %v\n"+
+					"with:     %v\n", test.n, n, test)
 			}
 		}
 	}
