@@ -210,6 +210,15 @@ func (r *redisQueue) DeleteQueue(ctx context.Context, name string) error {
 		}
 	}()
 
+	switch _, err := r.getQueue(conn, name); err {
+	case nil:
+		// ready to delete queue
+	case eboolkiq.ErrQueueNotFound:
+		return err
+	default:
+		return err
+	}
+
 	if err := r.flushQueue(conn, name); err != nil {
 		return err
 	}
@@ -258,6 +267,14 @@ func (r *redisQueue) FlushQueue(ctx context.Context, name string) error {
 			log.Println("error while closing redis connection:", err)
 		}
 	}()
+
+	switch _, err := r.getQueue(conn, name); err {
+	case nil:
+	case eboolkiq.ErrQueueNotFound:
+		return err
+	default:
+		return err
+	}
 
 	return r.flushQueue(conn, name)
 }
