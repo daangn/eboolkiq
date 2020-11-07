@@ -16,25 +16,15 @@ package pb
 
 import (
 	"errors"
-	"regexp"
 )
 
 var (
-	ErrNilJob       = errors.New("eboolkiq: job must not null")
-	ErrInvalidJobID = errors.New("eboolkiq: invalid job id. only alpha numeric allowed")
-)
-
-var (
-	idRegex = regexp.MustCompile(`[a-zA-Z0-9]+`)
+	ErrNilJob = errors.New("eboolkiq: job must not null")
 )
 
 func (x *Job) Validate() error {
 	if x == nil {
 		return ErrNilJob
-	}
-
-	if !idRegex.MatchString(x.Id) {
-		return ErrInvalidJobID
 	}
 
 	return nil
