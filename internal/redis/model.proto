@@ -26,7 +26,7 @@ import "google/protobuf/timestamp.proto";
 import "job.proto";
 import "queue.proto";
 
-message JobQueue {
+message Working {
   eboolkiq.Job job = 1;
   eboolkiq.Queue queue = 2;
   google.protobuf.Timestamp start_at = 3;

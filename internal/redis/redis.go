@@ -388,7 +388,7 @@ func (r *redisQueue) bpopJob(conn redis.Conn, queueName string, timeout time.Dur
 }
 
 func (r *redisQueue) setJob(conn redis.Conn, q *pb.Queue, job *pb.Job) error {
-	model := JobQueue{
+	model := Working{
 		Job:     job,
 		Queue:   q,
 		StartAt: timestamppb.Now(),
@@ -418,7 +418,7 @@ func (r *redisQueue) getJob(conn redis.Conn, jobId string) (*pb.Job, *pb.Queue, 
 		}
 	}
 
-	var model JobQueue
+	var model Working
 	if err := proto.Unmarshal(modelBytes, &model); err != nil {
 		return nil, nil, err
 	}
