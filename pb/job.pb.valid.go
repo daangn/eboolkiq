@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	ErrNilJob = errors.New("eboolkiq: job must not null")
+	ErrNilJob = errors.New("eboolkiq: job is empty")
 )
 
 func (x *Job) Validate() error {

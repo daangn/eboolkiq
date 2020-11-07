@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	ErrNilQueue         = errors.New("eboolkiq: queue must not null")
+	ErrNilQueue         = errors.New("eboolkiq: queue is empty")
 	ErrInvalidQueueName = errors.New("eboolkiq: invalid queue name. only alpha numeric allowed")
 )
 
