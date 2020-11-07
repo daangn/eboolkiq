@@ -16,6 +16,7 @@ package redis
 
 import (
 	"context"
+	"errors"
 	"log"
 	"time"
 
@@ -72,6 +73,11 @@ func (r *redisQueue) PushJob(ctx context.Context, queue string, job *pb.Job) err
 	}
 
 	return r.pushJob(conn, q.Name, job)
+}
+
+func (r *redisQueue) PushJobAfter(ctx context.Context, queue string, job *pb.Job, after time.Duration) error {
+	// TODO: implement me
+	return errors.New("redis: delayed job push unimplemented")
 }
 
 // FetchJob fetch job from redis queue using BRPOP command.
