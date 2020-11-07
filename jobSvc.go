@@ -38,6 +38,11 @@ type jobDB interface {
 	// queue 는 항상 존재해야 한다.
 	PushJob(ctx context.Context, queue string, job *pb.Job) error
 
+	// PushJobAfter 은 queue 에 job 을 after 시간 이후에 추가해 준다.
+	//
+	// queue 는 항상 존재해야 하며, after 는 1초 이상이어야 한다.
+	PushJobAfter(ctx context.Context, queue string, job *pb.Job, after time.Duration) error
+
 	// FetchJob 은 queue 로부터 job 을 가져온다.
 	//
 	// queue 는 항상 존재해야 한다. 또한 queue 가 비어 있을 경우 waitTimeout 시간만큼 기다린다.
@@ -78,15 +83,23 @@ func (h *jobSvcHandler) Push(ctx context.Context, req *rpc.PushReq) (*rpc.PushRe
 	}
 	req.Job.Id = h.genID()
 
-	err := h.db.PushJob(ctx, req.Queue.Name, req.Job)
-	switch err {
-	case nil:
-		return &rpc.PushResp{Job: req.Job}, nil
-	case ErrQueueNotFound:
-		return nil, status.Error(codes.NotFound, err.Error())
-	default:
-		return nil, status.Error(codes.Internal, err.Error())
+	if req.Job.Start != nil {
+		var after time.Duration
+
+		switch req.Job.Start.(type) {
+		case *pb.Job_StartAt:
+			after = req.Job.GetStartAt().AsTime().Sub(time.Now())
+		case *pb.Job_StartAfter:
+			after = req.Job.GetStartAfter().AsDuration()
+		}
+
+		// do delayed push only if Job_StartAt is future
+		if after >= time.Second {
+			return h.pushJobAfter(ctx, req.Queue.Name, req.Job, after)
+		}
 	}
+
+	return h.pushJob(ctx, req.Queue.Name, req.Job)
 }
 
 func (h *jobSvcHandler) Fetch(ctx context.Context, req *rpc.FetchReq) (*rpc.FetchResp, error) {
@@ -143,4 +156,28 @@ func (h *jobSvcHandler) Finish(ctx context.Context, req *rpc.FinishReq) (*rpc.Fi
 
 func (h *jobSvcHandler) genID() string {
 	return h.node.Generate().String()
+}
+
+func (h *jobSvcHandler) pushJobAfter(ctx context.Context, queue string, job *pb.Job, after time.Duration) (*rpc.PushResp, error) {
+	err := h.db.PushJobAfter(ctx, queue, job, after)
+	switch err {
+	case nil:
+		return &rpc.PushResp{Job: job}, nil
+	case ErrQueueNotFound:
+		return nil, status.Error(codes.NotFound, err.Error())
+	default:
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+}
+
+func (h *jobSvcHandler) pushJob(ctx context.Context, queue string, job *pb.Job) (*rpc.PushResp, error) {
+	err := h.db.PushJob(ctx, queue, job)
+	switch err {
+	case nil:
+		return &rpc.PushResp{Job: job}, nil
+	case ErrQueueNotFound:
+		return nil, status.Error(codes.NotFound, err.Error())
+	default:
+		return nil, status.Error(codes.Internal, err.Error())
+	}
 }
