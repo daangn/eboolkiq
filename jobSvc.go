@@ -141,7 +141,7 @@ func (h *jobSvcHandler) Finish(ctx context.Context, req *rpc.FinishReq) (*rpc.Fi
 	if req.Success {
 		err = h.db.Succeed(ctx, req.Job.Id)
 	} else {
-		err = h.db.Failed(ctx, req.Job.Id, req.ErrorMessage.GetValue())
+		err = h.db.Failed(ctx, req.Job.Id, req.ErrorMessage)
 	}
 
 	switch err {

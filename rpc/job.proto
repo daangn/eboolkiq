@@ -22,7 +22,6 @@ option java_outer_classname = "JobProto";
 option java_package = "com.eboolkiq.rpc";
 
 import "google/protobuf/duration.proto";
-import "google/protobuf/wrappers.proto";
 import "queue.proto";
 import "job.proto";
 
@@ -99,7 +98,7 @@ message FinishReq {
   // error_message 는 작업 도중 발생한 error 에 대한 메시지이다.
   //
   // Job 의 성공/실패 여부는 error_message 와 상관 없이 success 를 기준으로 판단한다.
-  google.protobuf.StringValue error_message = 3;
+  string error_message = 3;
 }
 
 message FinishResp {}
