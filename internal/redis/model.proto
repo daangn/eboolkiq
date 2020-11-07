@@ -23,8 +23,8 @@ option java_package = "com.eboolkiq.internal.redis";
 
 import "google/protobuf/timestamp.proto";
 
-import "proto/job.proto";
-import "proto/queue.proto";
+import "job.proto";
+import "queue.proto";
 
 message JobQueue {
   eboolkiq.Job job = 1;

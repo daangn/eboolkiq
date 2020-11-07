@@ -21,7 +21,7 @@ option java_multiple_files = true;
 option java_outer_classname = "QueueProto";
 option java_package = "com.eboolkiq.rpc";
 
-import "proto/queue.proto";
+import "queue.proto";
 
 service Queue {
   // List rpc 는 eboolkiq 서버가 관리중인 모든 큐를 조회한다.

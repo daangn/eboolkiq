@@ -23,8 +23,8 @@ option java_package = "com.eboolkiq.rpc";
 
 import "google/protobuf/duration.proto";
 import "google/protobuf/wrappers.proto";
-import "proto/queue.proto";
-import "proto/job.proto";
+import "queue.proto";
+import "job.proto";
 
 service Job {
   // Push rpc 는 작업 큐에 작업을 넣기 위한 rpc 이다.
