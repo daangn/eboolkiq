@@ -37,5 +37,9 @@ func (x *Queue) Validate() error {
 		return ErrInvalidQueueName
 	}
 
+	if err := x.Timeout.CheckValid(); err != nil {
+		return err
+	}
+
 	return nil
 }
