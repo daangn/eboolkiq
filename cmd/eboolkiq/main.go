@@ -64,9 +64,11 @@ func main() {
 	}
 
 	jobSvc := eboolkiq.NewJobSvcHandler(redisPool, node)
+	queueSvc := eboolkiq.NewQueueHandler(redisPool, node)
 	grpcServer := grpc.NewGrpcServer()
 
 	rpc.RegisterJobServer(grpcServer, jobSvc)
+	rpc.RegisterQueueServer(grpcServer, queueSvc)
 
 	lis, err := net.Listen("tcp", ":80")
 	if err != nil {
