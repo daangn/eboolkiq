@@ -31,3 +31,8 @@ message Working {
   eboolkiq.Queue queue = 2;
   google.protobuf.Timestamp start_at = 3;
 }
+
+message Failed {
+  eboolkiq.Job job = 1;
+  string error_message = 2;
+}

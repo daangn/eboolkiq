@@ -169,7 +169,8 @@ func (r *redisQueue) Failed(ctx context.Context, jobId string, errMsg string) er
 	if queue.MaxRetry == -1 || int32(job.Attempt) < queue.MaxRetry+1 {
 		return r.pushJob(conn, queue.Name, job)
 	}
-	return r.failJob(conn, queue.Name, job)
+
+	return r.failJob(conn, queue.Name, job, errMsg)
 }
 
 func (r *redisQueue) ListQueues(ctx context.Context) ([]*pb.Queue, error) {
@@ -438,13 +439,18 @@ func (r *redisQueue) deleteJob(conn redis.Conn, jobId string) error {
 	return nil
 }
 
-func (r *redisQueue) failJob(conn redis.Conn, queueName string, job *pb.Job) error {
-	jobBytes, err := proto.Marshal(job)
+func (r *redisQueue) failJob(conn redis.Conn, queueName string, job *pb.Job, errMsg string) error {
+	failed := &Failed{
+		Job:          job,
+		ErrorMessage: errMsg,
+	}
+
+	failedBytes, err := proto.Marshal(failed)
 	if err != nil {
 		return err
 	}
 
-	_, err = redis.Int(conn.Do("LPUSH", deadQueuePrefix+queueName, jobBytes))
+	_, err = redis.Int(conn.Do("LPUSH", deadQueuePrefix+queueName, failedBytes))
 	if err != nil {
 		return err
 	}
