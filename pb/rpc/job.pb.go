@@ -370,7 +370,7 @@ type FinishReq struct {
 	Success bool `protobuf:"varint,2,opt,name=success,proto3" json:"success,omitempty"`
 	// error_message 는 작업 도중 발생한 error 에 대한 메시지이다.
 	//
-	// error_message 가 있을 경우(defined) 해당 작업은 항상 실패 했다고 판단한다.
+	// Job 의 성공/실패 여부는 error_message 와 상관 없이 success 를 기준으로 판단한다.
 	ErrorMessage *wrappers.StringValue `protobuf:"bytes,3,opt,name=error_message,json=errorMessage,proto3" json:"error_message,omitempty"`
 }
 
