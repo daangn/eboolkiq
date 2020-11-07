@@ -162,6 +162,10 @@ func (r *redisQueue) Failed(ctx context.Context, jobId string, errMsg string) er
 		return err
 	}
 
+	if err := r.deleteJob(conn, jobId); err != nil {
+		return err
+	}
+
 	if queue.MaxRetry == -1 && int32(job.Attempt-1) < queue.MaxRetry {
 		return r.pushJob(conn, queue.Name, job)
 	}
