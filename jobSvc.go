@@ -78,7 +78,7 @@ func NewJobSvcHandler(db jobDB, node *snowflake.Node) *jobSvcHandler {
 }
 
 func (h *jobSvcHandler) Push(ctx context.Context, req *rpc.PushReq) (*rpc.PushResp, error) {
-	if err := req.Validate(); err != nil {
+	if err := req.CheckValid(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	req.Job.Id = h.genID()
@@ -103,7 +103,7 @@ func (h *jobSvcHandler) Push(ctx context.Context, req *rpc.PushReq) (*rpc.PushRe
 }
 
 func (h *jobSvcHandler) Fetch(ctx context.Context, req *rpc.FetchReq) (*rpc.FetchResp, error) {
-	if err := req.Validate(); err != nil {
+	if err := req.CheckValid(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
@@ -133,7 +133,7 @@ func (h *jobSvcHandler) FetchStream(req *rpc.FetchStreamReq, server rpc.Job_Fetc
 }
 
 func (h *jobSvcHandler) Finish(ctx context.Context, req *rpc.FinishReq) (*rpc.FinishResp, error) {
-	if err := req.Validate(); err != nil {
+	if err := req.CheckValid(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 

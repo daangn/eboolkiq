@@ -28,7 +28,7 @@ var (
 	queueNameRegex = regexp.MustCompile(`[a-zA-Z0-9]+`)
 )
 
-func (x *Queue) Validate() error {
+func (x *Queue) CheckValid() error {
 	if x == nil {
 		return ErrNilQueue
 	}

@@ -22,7 +22,7 @@ var (
 	ErrNilJob = errors.New("eboolkiq: job is empty")
 )
 
-func (x *Job) Validate() error {
+func (x *Job) CheckValid() error {
 	if x == nil {
 		return ErrNilJob
 	}

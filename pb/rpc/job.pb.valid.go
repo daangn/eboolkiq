@@ -16,7 +16,7 @@ package rpc
 
 import "github.com/daangn/eboolkiq/pb"
 
-func (x *PushReq) Validate() error {
+func (x *PushReq) CheckValid() error {
 	if x == nil {
 		return ErrNilRequest
 	}
@@ -53,7 +53,7 @@ func (x *PushReq) Validate() error {
 	return nil
 }
 
-func (x *FetchReq) Validate() error {
+func (x *FetchReq) CheckValid() error {
 	if x == nil {
 		return ErrNilRequest
 	}
@@ -75,7 +75,7 @@ func (x *FetchReq) Validate() error {
 	return nil
 }
 
-func (x *FetchStreamReq) Validate() error {
+func (x *FetchStreamReq) CheckValid() error {
 	if x == nil {
 		return ErrNilRequest
 	}
@@ -91,7 +91,7 @@ func (x *FetchStreamReq) Validate() error {
 	return nil
 }
 
-func (x *FinishReq) Validate() error {
+func (x *FinishReq) CheckValid() error {
 	if x == nil {
 		return ErrNilRequest
 	}

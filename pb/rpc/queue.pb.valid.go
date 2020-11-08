@@ -14,14 +14,14 @@
 
 package rpc
 
-func (x *ListReq) Validate() error {
+func (x *ListReq) CheckValid() error {
 	if x == nil {
 		return ErrNilRequest
 	}
 	return nil
 }
 
-func (x *GetReq) Validate() error {
+func (x *GetReq) CheckValid() error {
 	if x == nil {
 		return ErrNilRequest
 	}
@@ -33,7 +33,7 @@ func (x *GetReq) Validate() error {
 	return nil
 }
 
-func (x *CreateReq) Validate() error {
+func (x *CreateReq) CheckValid() error {
 	if x == nil {
 		return ErrNilRequest
 	}
@@ -49,7 +49,7 @@ func (x *CreateReq) Validate() error {
 	return nil
 }
 
-func (x *DeleteReq) Validate() error {
+func (x *DeleteReq) CheckValid() error {
 	if x == nil {
 		return ErrNilRequest
 	}
@@ -61,7 +61,7 @@ func (x *DeleteReq) Validate() error {
 	return nil
 }
 
-func (x *UpdateReq) Validate() error {
+func (x *UpdateReq) CheckValid() error {
 	if x == nil {
 		return ErrNilRequest
 	}
@@ -77,7 +77,7 @@ func (x *UpdateReq) Validate() error {
 	return nil
 }
 
-func (x *FlushReq) Validate() error {
+func (x *FlushReq) CheckValid() error {
 	if x == nil {
 		return ErrNilRequest
 	}
@@ -89,7 +89,7 @@ func (x *FlushReq) Validate() error {
 	return nil
 }
 
-func (x *CountJobReq) Validate() error {
+func (x *CountJobReq) CheckValid() error {
 	if x == nil {
 		return ErrNilRequest
 	}

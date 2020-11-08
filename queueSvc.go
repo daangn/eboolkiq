@@ -74,7 +74,7 @@ func NewQueueHandler(db queueDB, node *snowflake.Node) *queueSvcHandler {
 }
 
 func (h *queueSvcHandler) List(ctx context.Context, req *rpc.ListReq) (*rpc.ListResp, error) {
-	if err := req.Validate(); err != nil {
+	if err := req.CheckValid(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
@@ -94,7 +94,7 @@ func (h *queueSvcHandler) List(ctx context.Context, req *rpc.ListReq) (*rpc.List
 }
 
 func (h *queueSvcHandler) Get(ctx context.Context, req *rpc.GetReq) (*rpc.GetResp, error) {
-	if err := req.Validate(); err != nil {
+	if err := req.CheckValid(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
@@ -116,11 +116,11 @@ func (h *queueSvcHandler) Get(ctx context.Context, req *rpc.GetReq) (*rpc.GetRes
 }
 
 func (h *queueSvcHandler) Create(ctx context.Context, req *rpc.CreateReq) (*rpc.CreateResp, error) {
-	if err := req.Validate(); err != nil {
+	if err := req.CheckValid(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if err := req.Queue.Validate(); err != nil {
+	if err := req.Queue.CheckValid(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
@@ -142,7 +142,7 @@ func (h *queueSvcHandler) Create(ctx context.Context, req *rpc.CreateReq) (*rpc.
 }
 
 func (h *queueSvcHandler) Delete(ctx context.Context, req *rpc.DeleteReq) (*rpc.DeleteResp, error) {
-	if err := req.Validate(); err != nil {
+	if err := req.CheckValid(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
@@ -164,7 +164,7 @@ func (h *queueSvcHandler) Delete(ctx context.Context, req *rpc.DeleteReq) (*rpc.
 }
 
 func (h *queueSvcHandler) Update(ctx context.Context, req *rpc.UpdateReq) (*rpc.UpdateResp, error) {
-	if err := req.Validate(); err != nil {
+	if err := req.CheckValid(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
@@ -186,7 +186,7 @@ func (h *queueSvcHandler) Update(ctx context.Context, req *rpc.UpdateReq) (*rpc.
 }
 
 func (h *queueSvcHandler) Flush(ctx context.Context, req *rpc.FlushReq) (*rpc.FlushResp, error) {
-	if err := req.Validate(); err != nil {
+	if err := req.CheckValid(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
@@ -208,7 +208,7 @@ func (h *queueSvcHandler) Flush(ctx context.Context, req *rpc.FlushReq) (*rpc.Fl
 }
 
 func (h *queueSvcHandler) CountJob(ctx context.Context, req *rpc.CountJobReq) (*rpc.CountJobResp, error) {
-	if err := req.Validate(); err != nil {
+	if err := req.CheckValid(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
