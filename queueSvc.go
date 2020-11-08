@@ -120,6 +120,10 @@ func (h *queueSvcHandler) Create(ctx context.Context, req *rpc.CreateReq) (*rpc.
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
+	if err := req.Queue.Validate(); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
 	queue, err := h.db.CreateQueue(ctx, req.Queue)
 	if err != nil {
 		switch err {
