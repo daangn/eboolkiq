@@ -15,8 +15,9 @@
 package redis
 
 const (
-	queuePrefix     = "queue:"
-	deadQueuePrefix = "failed:"
-	kvQueuePrefix   = "kv:queue:"
-	kvWorkingPrefix = "kv:working:"
+	queuePrefix      = "queue:"
+	deadQueuePrefix  = "failed:"
+	delayQueuePrefix = "delay:"
+	kvQueuePrefix    = "kv:queue:"
+	kvWorkingPrefix  = "kv:working:"
 )

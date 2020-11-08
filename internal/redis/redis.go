@@ -16,7 +16,6 @@ package redis
 
 import (
 	"context"
-	"errors"
 	"log"
 	"time"
 
@@ -75,9 +74,28 @@ func (r *redisQueue) PushJob(ctx context.Context, queue string, job *pb.Job) err
 	return r.pushJob(conn, q.Name, job)
 }
 
-func (r *redisQueue) PushJobAfter(ctx context.Context, queue string, job *pb.Job, after time.Duration) error {
-	// TODO: implement me
-	return errors.New("redis: delayed job push unimplemented")
+// ScheduleJob push job to redis delay queue using ZADD command
+func (r *redisQueue) ScheduleJob(ctx context.Context, queue string, job *pb.Job, startAt time.Time) error {
+	conn, err := r.pool.GetContext(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Println("error while closing redis connection:", err)
+		}
+	}()
+
+	q, err := r.getQueue(conn, queue)
+	if err != nil {
+		return err
+	}
+
+	if err := r.scheduleJob(conn, q.Name, job, startAt); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // FetchJob fetch job from redis queue using BRPOP command.
@@ -516,4 +534,24 @@ func (r *redisQueue) flushQueue(conn redis.Conn, name string) error {
 
 func (r *redisQueue) countJobFromQueue(conn redis.Conn, name string) (uint64, error) {
 	return redis.Uint64(conn.Do("LLEN", queuePrefix+name))
+}
+
+func (r *redisQueue) scheduleJob(conn redis.Conn, name string, job *pb.Job, startAt time.Time) error {
+	delay := &Delay{
+		Job:       job,
+		CreatedAt: timestamppb.Now(),
+		StartAt:   timestamppb.New(startAt),
+	}
+
+	delayBytes, err := proto.Marshal(delay)
+	if err != nil {
+		return err
+	}
+
+	if _, err := redis.Int(conn.Do(
+		"ZADD", delayQueuePrefix+name, startAt.Unix(), delayBytes),
+	); err != nil {
+		return err
+	}
+	return nil
 }

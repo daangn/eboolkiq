@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/gomodule/redigo/redis"
+	"google.golang.org/protobuf/types/known/durationpb"
 
 	"github.com/daangn/eboolkiq"
 	"github.com/daangn/eboolkiq/pb"
@@ -67,6 +68,7 @@ func TestRedisQueue(t *testing.T) {
 
 	t.Run("GetQueue", testRedisQueue_GetQueue(t, db))
 	t.Run("PushJob", testRedisQueue_PushJob(t, db))
+	t.Run("ScheduleJob", testRedisQueue_ScheduleJob(t, db))
 	t.Run("FetchJob/withoutTimeout", testRedisQueue_FetchJob(t, db, 0))
 	t.Run("FetchJob/withTimeout", testRedisQueue_FetchJob(t, db, time.Second))
 	t.Run("Succeed", testRedisQueue_Succeed(t, db))
@@ -183,6 +185,65 @@ func testRedisQueue_PushJob(t *testing.T, r *redisQueue) func(*testing.T) {
 				t.Errorf("test failed\n"+
 					"expected: %v\n"+
 					"actual:   %v\n", test.err, err)
+			}
+		}
+	}
+}
+
+func testRedisQueue_ScheduleJob(t *testing.T, r *redisQueue) func(*testing.T) {
+	conn, err := r.pool.GetContext(context.Background())
+	if err != nil {
+		t.Fatal("TestRedisQueue/ScheduleJob setup failed:", err)
+	}
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Println("error while closing redis connection:", err)
+		}
+	}()
+
+	if err := r.setQueue(conn, &pb.Queue{
+		Name: "test",
+	}); err != nil {
+		t.Fatal("TestRedisQueue/PushJob setup failed:", err)
+	}
+
+	return func(t *testing.T) {
+		defer mustCleanUpRedis(t, r.pool)
+
+		tests := []struct {
+			ctx     context.Context
+			queue   string
+			job     *pb.Job
+			startAt time.Time
+			err     error
+		}{
+			{
+				ctx:   context.Background(),
+				queue: "test",
+				job: &pb.Job{
+					Id:          "test_id",
+					Description: "test job",
+					Start: &pb.Job_StartAfter{
+						StartAfter: durationpb.New(5 * time.Second),
+					},
+				},
+				startAt: time.Now().Add(5 * time.Second),
+				err:     nil,
+			}, {
+				ctx:   context.Background(),
+				queue: "not_found",
+				err:   eboolkiq.ErrQueueNotFound,
+			},
+		}
+
+		for _, test := range tests {
+			err := r.ScheduleJob(test.ctx, test.queue, test.job, test.startAt)
+
+			if err != test.err {
+				t.Errorf("test failed\n"+
+					"expected: %+v\n"+
+					"actual: %+v\n"+
+					"with: %+v\n", test.err, err, test)
 			}
 		}
 	}

@@ -38,10 +38,8 @@ type jobDB interface {
 	// queue 는 항상 존재해야 한다.
 	PushJob(ctx context.Context, queue string, job *pb.Job) error
 
-	// PushJobAfter 은 queue 에 job 을 after 시간 이후에 추가해 준다.
-	//
-	// queue 는 항상 존재해야 하며, after 는 1초 이상이어야 한다.
-	PushJobAfter(ctx context.Context, queue string, job *pb.Job, after time.Duration) error
+	// ScheduleJob 은 queue 에 job 을 startAt 시간에 push 될 수 있게 해준다.
+	ScheduleJob(ctx context.Context, queue string, job *pb.Job, startAt time.Time) error
 
 	// FetchJob 은 queue 로부터 job 을 가져온다.
 	//
@@ -84,18 +82,21 @@ func (h *jobSvcHandler) Push(ctx context.Context, req *rpc.PushReq) (*rpc.PushRe
 	req.Job.Id = h.genID()
 
 	if req.Job.Start != nil {
+		var startAt time.Time
 		var after time.Duration
 
 		switch req.Job.Start.(type) {
 		case *pb.Job_StartAt:
-			after = req.Job.GetStartAt().AsTime().Sub(time.Now())
+			startAt = req.Job.GetStartAt().AsTime()
+			after = startAt.Sub(time.Now())
 		case *pb.Job_StartAfter:
 			after = req.Job.GetStartAfter().AsDuration()
+			startAt = time.Now().Add(after)
 		}
 
 		// do delayed push only if Job_StartAt is future
 		if after >= time.Second {
-			return h.pushJobAfter(ctx, req.Queue.Name, req.Job, after)
+			return h.scheduleJob(ctx, req.Queue.Name, req.Job, startAt)
 		}
 	}
 
@@ -158,8 +159,8 @@ func (h *jobSvcHandler) genID() string {
 	return h.node.Generate().String()
 }
 
-func (h *jobSvcHandler) pushJobAfter(ctx context.Context, queue string, job *pb.Job, after time.Duration) (*rpc.PushResp, error) {
-	err := h.db.PushJobAfter(ctx, queue, job, after)
+func (h *jobSvcHandler) scheduleJob(ctx context.Context, queue string, job *pb.Job, startAt time.Time) (*rpc.PushResp, error) {
+	err := h.db.ScheduleJob(ctx, queue, job, startAt)
 	switch err {
 	case nil:
 		return &rpc.PushResp{Job: job}, nil
