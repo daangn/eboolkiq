@@ -336,7 +336,12 @@ func (r *redisQueue) CountJobFromQueue(ctx context.Context, name string) (uint64
 func (r *redisQueue) getQueue(conn redis.Conn, queue string) (*pb.Queue, error) {
 	queueBytes, err := redis.Bytes(conn.Do("GET", kvQueuePrefix+queue))
 	if err != nil {
-		return nil, eboolkiq.ErrQueueNotFound
+		switch err {
+		case redis.ErrNil:
+			return nil, eboolkiq.ErrQueueNotFound
+		default:
+			return nil, err
+		}
 	}
 
 	var q pb.Queue
