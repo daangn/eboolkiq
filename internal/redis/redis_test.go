@@ -67,8 +67,8 @@ func TestRedisQueue(t *testing.T) {
 
 	t.Run("GetQueue", testRedisQueue_GetQueue(t, db))
 	t.Run("PushJob", testRedisQueue_PushJob(t, db))
-	t.Run("FetchJob/0", testRedisQueue_FetchJob(t, db, 0))
-	t.Run("FetchJob/1ms", testRedisQueue_FetchJob(t, db, time.Second))
+	t.Run("FetchJob/withoutTimeout", testRedisQueue_FetchJob(t, db, 0))
+	t.Run("FetchJob/withTimeout", testRedisQueue_FetchJob(t, db, time.Second))
 	t.Run("Succeed", testRedisQueue_Succeed(t, db))
 	t.Run("Failed", testRedisQueue_Failed(t, db))
 	t.Run("ListQueues", testRedisQueue_ListQueues(t, db))
