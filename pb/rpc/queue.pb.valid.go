@@ -25,6 +25,11 @@ func (x *GetReq) Validate() error {
 	if x == nil {
 		return ErrNilRequest
 	}
+
+	if x.Name == "" {
+		return ErrEmptyQueueName
+	}
+
 	return nil
 }
 
@@ -33,8 +38,12 @@ func (x *CreateReq) Validate() error {
 		return ErrNilRequest
 	}
 
-	if err := x.Queue.Validate(); err != nil {
-		return err
+	if x.Queue == nil {
+		return ErrNilQueue
+	}
+
+	if x.Queue.Name == "" {
+		return ErrEmptyQueueName
 	}
 
 	return nil
@@ -44,6 +53,11 @@ func (x *DeleteReq) Validate() error {
 	if x == nil {
 		return ErrNilRequest
 	}
+
+	if x.Name == "" {
+		return ErrEmptyQueueName
+	}
+
 	return nil
 }
 
@@ -51,9 +65,15 @@ func (x *UpdateReq) Validate() error {
 	if x == nil {
 		return ErrNilRequest
 	}
+
 	if x.Queue == nil {
 		return ErrNilQueue
 	}
+
+	if x.Queue.Name == "" {
+		return ErrEmptyQueueName
+	}
+
 	return nil
 }
 
@@ -61,6 +81,11 @@ func (x *FlushReq) Validate() error {
 	if x == nil {
 		return ErrNilRequest
 	}
+
+	if x.Name == "" {
+		return ErrNilQueue
+	}
+
 	return nil
 }
 
@@ -68,5 +93,10 @@ func (x *CountJobReq) Validate() error {
 	if x == nil {
 		return ErrNilRequest
 	}
+
+	if x.Name == "" {
+		return ErrNilQueue
+	}
+
 	return nil
 }

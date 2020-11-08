@@ -14,17 +14,40 @@
 
 package rpc
 
+import "github.com/daangn/eboolkiq/pb"
+
 func (x *PushReq) Validate() error {
 	if x == nil {
 		return ErrNilRequest
 	}
 
-	if err := x.Queue.Validate(); err != nil {
-		return err
+	if x.Queue == nil {
+		return ErrNilQueue
 	}
 
-	if err := x.Job.Validate(); err != nil {
-		return err
+	if x.Queue.Name == "" {
+		return ErrEmptyQueueName
+	}
+
+	if x.Job == nil {
+		return ErrNilJob
+	}
+
+	if x.Job.Start != nil {
+		switch x.Job.Start.(type) {
+		case *pb.Job_StartAt:
+			if err := x.Job.GetStartAt().CheckValid(); err != nil {
+				return err
+			}
+		case *pb.Job_StartAfter:
+			if err := x.Job.GetStartAfter().CheckValid(); err != nil {
+				return err
+			}
+		}
+	}
+
+	if x.Job.Attempt != 0 {
+		return ErrFetchedJob
 	}
 
 	return nil
@@ -35,8 +58,18 @@ func (x *FetchReq) Validate() error {
 		return ErrNilRequest
 	}
 
-	if err := x.Queue.Validate(); err != nil {
-		return err
+	if x.Queue == nil {
+		return ErrNilQueue
+	}
+
+	if x.Queue.Name == "" {
+		return ErrEmptyQueueName
+	}
+
+	if x.WaitDuration != nil {
+		if err := x.WaitDuration.CheckValid(); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -47,8 +80,12 @@ func (x *FetchStreamReq) Validate() error {
 		return ErrNilRequest
 	}
 
-	if err := x.Queue.Validate(); err != nil {
-		return err
+	if x.Queue == nil {
+		return ErrNilQueue
+	}
+
+	if x.Queue.Name == "" {
+		return ErrEmptyQueueName
 	}
 
 	return nil
@@ -59,8 +96,12 @@ func (x *FinishReq) Validate() error {
 		return ErrNilRequest
 	}
 
-	if err := x.Job.Validate(); err != nil {
-		return err
+	if x.Job == nil {
+		return ErrNilJob
+	}
+
+	if x.Job.Id == "" {
+		return ErrNilJob
 	}
 
 	return nil

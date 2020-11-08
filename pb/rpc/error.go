@@ -17,6 +17,9 @@ package rpc
 import "errors"
 
 var (
-	ErrNilRequest = errors.New("eboolkiq: request is nil")
-	ErrNilQueue   = errors.New("eboolkiq: queue must not empty")
+	ErrNilRequest     = errors.New("eboolkiq: request is empty")
+	ErrNilQueue       = errors.New("eboolkiq: queue is empty")
+	ErrNilJob         = errors.New("eboolkiq: job is empty")
+	ErrFetchedJob     = errors.New("eboolkiq: job has already fetched")
+	ErrEmptyQueueName = errors.New("eboolkiq: name of queue is empty")
 )
