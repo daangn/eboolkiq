@@ -554,7 +554,7 @@ func (r *redisQueue) countJobFromQueue(conn redis.Conn, name string) (uint64, er
 	return redis.Uint64(conn.Do("LLEN", queuePrefix+name))
 }
 
-func (r *redisQueue) scheduleJob(conn redis.Conn, name string, job *pb.Job, startAt time.Time) error {
+func (r *redisQueue) scheduleJob(conn redis.Conn, queue string, job *pb.Job, startAt time.Time) error {
 	delay := &Delay{
 		Job:       job,
 		CreatedAt: timestamppb.Now(),
@@ -567,7 +567,7 @@ func (r *redisQueue) scheduleJob(conn redis.Conn, name string, job *pb.Job, star
 	}
 
 	if _, err := redis.Int(conn.Do(
-		"ZADD", delayQueuePrefix+name, startAt.Unix(), delayBytes),
+		"ZADD", delayQueuePrefix+queue, startAt.Unix(), delayBytes),
 	); err != nil {
 		return err
 	}
