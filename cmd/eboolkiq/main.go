@@ -57,6 +57,11 @@ func main() {
 	}()
 
 	redisPool := redis.NewRedisQueue(pool)
+	defer func() {
+		if err := redisPool.Close(); err != nil {
+			log.Println("error while close redis queue", err)
+		}
+	}()
 
 	node, err := snowflake.NewNode(cfg.NodeNo)
 	if err != nil {
