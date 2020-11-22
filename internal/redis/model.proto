@@ -36,9 +36,3 @@ message Failed {
   eboolkiq.Job job = 1;
   string error_message = 2;
 }
-
-message Delay {
-  eboolkiq.Job job = 1;
-  google.protobuf.Timestamp created_at = 2;
-  google.protobuf.Timestamp start_at = 3;
-}
