@@ -21,6 +21,9 @@ import (
 	"time"
 
 	redigo "github.com/gomodule/redigo/redis"
+	"google.golang.org/protobuf/proto"
+
+	"github.com/daangn/eboolkiq/pb"
 )
 
 var zpoplpushbyscore = redigo.NewScript(2, `
@@ -97,4 +100,107 @@ func (r *redisQueue) pushDelayJob(ctx context.Context, target string) error {
 		return err
 	}
 	return nil
+}
+
+func (r *redisQueue) jobTimeoutScheduler(ctx context.Context) {
+	tc := time.NewTicker(time.Second)
+	defer tc.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-tc.C:
+			r.checkMonitor(ctx)
+		}
+	}
+}
+
+func (r *redisQueue) checkMonitor(ctx context.Context) {
+	conn, err := r.pool.GetContext(ctx)
+	if err != nil {
+		log.Println("error while connect redis", err)
+		return
+	}
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Println("error while closing redis connection:", err)
+		}
+	}()
+
+	monitors, err := redigo.Strings(conn.Do("KEYS", monitorPrefix+"*"))
+
+	for _, monitor := range monitors {
+		queue, err := r.getQueue(conn, strings.TrimPrefix(monitor, monitorPrefix))
+		if err != nil {
+			log.Println("error while get queue:", err)
+			continue
+		}
+
+		jobs, err := r.listTimeoutJobs(conn, queue.Name)
+		if err != nil {
+			log.Println("error while list timeout jobs:", err)
+			continue
+		}
+
+		for _, job := range jobs {
+			if job == nil {
+				continue
+			}
+
+			if canRetry(queue, job) {
+				if err := r.pushJob(conn, queue.Name, job); err != nil {
+					log.Println("error while retry job:", err)
+				}
+			} else {
+				if err := r.failJob(conn, queue.Name, job, "job timeout exceed"); err != nil {
+					log.Println("error while add dead queue:", err)
+				}
+			}
+		}
+	}
+}
+
+var zpopbyscore = redigo.NewScript(1, `
+local result = redis.call("ZRANGEBYSCORE", KEYS[1], 0, ARGV[1])
+if #result > 0 then
+    redis.call("ZREMRANGEBYSCORE", KEYS[1], 0, ARGV[1])
+    return result
+else
+    return nil
+end`)
+
+var mgetdel = redigo.NewScript(0, `
+local result = redis.call("MGET", unpack(ARGV))
+redis.call("DEL", unpack(ARGV))
+return result
+`)
+
+func (r *redisQueue) listTimeoutJobs(conn redigo.Conn, queue string) ([]*pb.Job, error) {
+	workingKeys, err := redigo.Values(zpopbyscore.Do(conn, monitorPrefix+queue, time.Now().Unix()))
+	if err != nil {
+		if err == redigo.ErrNil {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	workingBytes, err := redigo.ByteSlices(mgetdel.Do(conn, workingKeys...))
+	if err != nil {
+		return nil, err
+	}
+
+	jobs := make([]*pb.Job, 0, len(workingBytes))
+	for _, workingByte := range workingBytes {
+		if workingByte == nil {
+			continue
+		}
+
+		var working Working
+		if err := proto.Unmarshal(workingByte, &working); err != nil {
+			return nil, err
+		}
+		jobs = append(jobs, working.Job)
+	}
+	return jobs, nil
 }

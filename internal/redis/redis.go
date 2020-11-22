@@ -42,6 +42,7 @@ func NewRedisQueue(pool *redis.Pool) *redisQueue {
 	}
 
 	go rq.delayJobScheduler(ctx)
+	go rq.jobTimeoutScheduler(ctx)
 	return rq
 }
 
