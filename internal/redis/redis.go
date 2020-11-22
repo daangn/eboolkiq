@@ -197,7 +197,7 @@ func (r *redisQueue) Failed(ctx context.Context, jobId string, errMsg string) er
 		return err
 	}
 
-	if queue.MaxRetry == -1 || int32(job.Attempt) < queue.MaxRetry+1 {
+	if canRetry(queue, job) {
 		return r.pushJob(conn, queue.Name, job)
 	}
 
@@ -589,4 +589,8 @@ func (r *redisQueue) scheduleJob(conn redis.Conn, queue string, job *pb.Job, sta
 		return err
 	}
 	return nil
+}
+
+func canRetry(queue *pb.Queue, job *pb.Job) bool {
+	return queue.MaxRetry == -1 || int32(job.Attempt) < queue.MaxRetry+1
 }
