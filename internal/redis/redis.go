@@ -223,7 +223,11 @@ func (r *redisQueue) CreateQueue(ctx context.Context, queue *pb.Queue) (*pb.Queu
 	if err != nil {
 		return nil, err
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Println("error while closing redis connection:", err)
+		}
+	}()
 
 	switch _, err := r.getQueue(conn, queue.Name); err {
 	case eboolkiq.ErrQueueNotFound:
