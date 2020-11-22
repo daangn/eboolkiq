@@ -18,6 +18,7 @@ const (
 	queuePrefix      = "queue:"
 	deadQueuePrefix  = "failed:"
 	delayQueuePrefix = "delay:"
+	monitorPrefix    = "monitor:"
 	kvQueuePrefix    = "kv:queue:"
 	kvWorkingPrefix  = "kv:working:"
 )

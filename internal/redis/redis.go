@@ -165,12 +165,12 @@ func (r *redisQueue) Succeed(ctx context.Context, jobId string) error {
 		}
 	}()
 
-	job, _, err := r.getJob(conn, jobId)
+	job, queue, err := r.getJob(conn, jobId)
 	if err != nil {
 		return err
 	}
 
-	if err := r.deleteJob(conn, job.Id); err != nil {
+	if err := r.deleteJob(conn, queue.Name, job.Id); err != nil {
 		return err
 	}
 
@@ -193,7 +193,7 @@ func (r *redisQueue) Failed(ctx context.Context, jobId string, errMsg string) er
 		return err
 	}
 
-	if err := r.deleteJob(conn, jobId); err != nil {
+	if err := r.deleteJob(conn, queue.Name, jobId); err != nil {
 		return err
 	}
 
@@ -428,6 +428,13 @@ func (r *redisQueue) bpopJob(conn redis.Conn, queueName string, timeout time.Dur
 	return &job, nil
 }
 
+var setzaddJob = redis.NewScript(2, `
+if not redis.call("SET", KEYS[1], ARGV[1]) then
+    return nil
+else
+    return redis.call("ZADD", KEYS[2], ARGV[2], ARGV[3])
+end`)
+
 func (r *redisQueue) setJob(conn redis.Conn, q *pb.Queue, job *pb.Job) error {
 	model := Working{
 		Job:     job,
@@ -440,11 +447,14 @@ func (r *redisQueue) setJob(conn redis.Conn, q *pb.Queue, job *pb.Job) error {
 		return err
 	}
 
-	_, err = redis.String(conn.Do("SET", kvWorkingPrefix+job.Id, modelBytes))
-	if err != nil {
+	ttl := time.Now().Add(q.Timeout.AsDuration())
+
+	if _, err := setzaddJob.Do(conn,
+		kvWorkingPrefix+job.Id, monitorPrefix+q.Name,
+		modelBytes, ttl.Unix(), kvWorkingPrefix+job.Id,
+	); err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -466,9 +476,18 @@ func (r *redisQueue) getJob(conn redis.Conn, jobId string) (*pb.Job, *pb.Queue, 
 	return model.Job, model.Queue, nil
 }
 
-func (r *redisQueue) deleteJob(conn redis.Conn, jobId string) error {
-	_, err := redis.Int64(conn.Do("DEL", kvWorkingPrefix+jobId))
-	if err != nil {
+var zremdelJob = redis.NewScript(2, `
+if not redis.call("ZREM", KEYS[1], ARGV[1]) then
+    return nil
+else
+    return redis.call("DEL", KEYS[2])
+end`)
+
+func (r *redisQueue) deleteJob(conn redis.Conn, queue string, jobId string) error {
+	if _, err := zremdelJob.Do(conn,
+		monitorPrefix+queue, kvWorkingPrefix+jobId,
+		kvWorkingPrefix+jobId,
+	); err != nil {
 		switch err {
 		case redis.ErrNil:
 			return eboolkiq.ErrJobNotFound
