@@ -56,9 +56,9 @@ func main() {
 		}
 	}()
 
-	redisPool := redis.NewRedisQueue(pool)
+	queue := redis.NewRedisQueue(pool)
 	defer func() {
-		if err := redisPool.Close(); err != nil {
+		if err := queue.Close(); err != nil {
 			log.Println("error while close redis queue", err)
 		}
 	}()
@@ -68,8 +68,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	jobSvc := eboolkiq.NewJobSvcHandler(redisPool, node)
-	queueSvc := eboolkiq.NewQueueHandler(redisPool, node)
+	jobSvc := eboolkiq.NewJobSvcHandler(queue, node)
+	queueSvc := eboolkiq.NewQueueHandler(queue, node)
 	grpcServer := grpc.NewGrpcServer()
 
 	rpc.RegisterJobServer(grpcServer, jobSvc)
