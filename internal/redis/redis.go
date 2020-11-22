@@ -29,12 +29,25 @@ import (
 
 type redisQueue struct {
 	pool *redis.Pool
+
+	cancel context.CancelFunc
 }
 
 func NewRedisQueue(pool *redis.Pool) *redisQueue {
-	return &redisQueue{
-		pool: pool,
+	ctx, cancel := context.WithCancel(context.Background())
+
+	rq := &redisQueue{
+		pool:   pool,
+		cancel: cancel,
 	}
+
+	go rq.delayJobScheduler(ctx)
+	return rq
+}
+
+func (r *redisQueue) Close() error {
+	r.cancel()
+	return nil
 }
 
 // GetQueue get queue from redis using GET command.
