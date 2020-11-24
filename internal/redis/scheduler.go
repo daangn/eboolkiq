@@ -18,6 +18,7 @@ import (
 	"context"
 	"log"
 	"strings"
+	"sync"
 	"time"
 
 	redigo "github.com/gomodule/redigo/redis"
@@ -35,7 +36,9 @@ else
     return nil
 end`)
 
-func (r *redisQueue) delayJobScheduler(ctx context.Context) {
+func (r *redisQueue) delayJobScheduler(ctx context.Context, wg *sync.WaitGroup) {
+	defer wg.Done()
+
 	tc := time.NewTicker(time.Second)
 	defer tc.Stop()
 
@@ -102,7 +105,9 @@ func (r *redisQueue) pushDelayJob(ctx context.Context, target string) error {
 	return nil
 }
 
-func (r *redisQueue) jobTimeoutScheduler(ctx context.Context) {
+func (r *redisQueue) jobTimeoutScheduler(ctx context.Context, wg *sync.WaitGroup) {
+	defer wg.Done()
+
 	tc := time.NewTicker(time.Second)
 	defer tc.Stop()
 

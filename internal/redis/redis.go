@@ -17,6 +17,7 @@ package redis
 import (
 	"context"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -31,6 +32,7 @@ type redisQueue struct {
 	pool *redis.Pool
 
 	cancel context.CancelFunc
+	wg     sync.WaitGroup
 }
 
 func NewRedisQueue(pool *redis.Pool) *redisQueue {
@@ -41,13 +43,16 @@ func NewRedisQueue(pool *redis.Pool) *redisQueue {
 		cancel: cancel,
 	}
 
-	go rq.delayJobScheduler(ctx)
-	go rq.jobTimeoutScheduler(ctx)
+	rq.wg.Add(2)
+	go rq.delayJobScheduler(ctx, &rq.wg)
+	go rq.jobTimeoutScheduler(ctx, &rq.wg)
+
 	return rq
 }
 
 func (r *redisQueue) Close() error {
 	r.cancel()
+	r.wg.Wait()
 	return nil
 }
 
