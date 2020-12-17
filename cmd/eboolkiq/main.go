@@ -27,6 +27,7 @@ import (
 
 	"github.com/daangn/eboolkiq/internal/redis"
 	"github.com/daangn/eboolkiq/pb/rpc"
+	"github.com/daangn/eboolkiq/pkg/graceful"
 	"github.com/daangn/eboolkiq/pkg/service"
 )
 
@@ -98,6 +99,8 @@ func main() {
 			log.Println("error while close tcp listener:", err)
 		}
 	}()
+
+	graceful.Stop(grpcServer.GracefulStop)
 
 	log.Println("server listening on", lis.Addr())
 	if err := grpcServer.Serve(lis); err != nil {
