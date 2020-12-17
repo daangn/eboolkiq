@@ -18,12 +18,14 @@ import (
 	"context"
 	"log"
 	"net"
+	"time"
 
 	"github.com/bwmarrin/snowflake"
 	redigo "github.com/gomodule/redigo/redis"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/keepalive"
 
 	"github.com/daangn/eboolkiq/internal/redis"
-	"github.com/daangn/eboolkiq/internal/server/grpc"
 	"github.com/daangn/eboolkiq/pb/rpc"
 	"github.com/daangn/eboolkiq/pkg/service"
 )
@@ -70,7 +72,19 @@ func main() {
 
 	jobSvc := service.NewJobSvcHandler(queue, node)
 	queueSvc := service.NewQueueHandler(queue, node)
-	grpcServer := grpc.NewGrpcServer()
+	grpcServer := grpc.NewServer(
+		grpc.KeepaliveParams(keepalive.ServerParameters{
+			MaxConnectionIdle:     15 * time.Second,
+			MaxConnectionAge:      30 * time.Second,
+			MaxConnectionAgeGrace: 15 * time.Second,
+			Time:                  15 * time.Second,
+			Timeout:               10 * time.Second,
+		}),
+		grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
+			MinTime:             5 * time.Second,
+			PermitWithoutStream: true,
+		}),
+	)
 
 	rpc.RegisterJobServer(grpcServer, jobSvc)
 	rpc.RegisterQueueServer(grpcServer, queueSvc)
