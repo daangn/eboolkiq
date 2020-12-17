@@ -62,6 +62,7 @@ type queueDB interface {
 }
 
 type queueSvcHandler struct {
+	rpc.UnimplementedQueueServer
 	db   queueDB
 	node *snowflake.Node
 }

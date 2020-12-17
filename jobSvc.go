@@ -64,6 +64,7 @@ type jobDB interface {
 }
 
 type jobSvcHandler struct {
+	rpc.UnimplementedJobServer
 	db   jobDB
 	node *snowflake.Node
 }
