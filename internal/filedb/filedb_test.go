@@ -34,7 +34,7 @@ func TestFileDB_openDB(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		_, err := fileDB.openDB(test.path)
+		db, err := fileDB.openDB(test.path)
 
 		if !errors.Is(err, test.err) {
 			t.Errorf("test failed\n"+
@@ -43,5 +43,29 @@ func TestFileDB_openDB(t *testing.T) {
 				"actual:   %+v\n"+
 				"with:     %+v\n", test.name, test.err, err, test)
 		}
+
+		if err != nil {
+			continue
+		}
+
+		if err := db.Close(); err != nil {
+			t.Errorf("unexpected error occured: %+v\n", err)
+		}
+	}
+}
+
+func TestFileDB_Close(t *testing.T) {
+	db := &FileDB{
+		dbmap: map[string]*bbolt.DB{},
+	}
+
+	if _, err := db.openDB("test/sample.db"); err != nil {
+		t.Errorf("fail to prepare: %+v\n", err)
+	}
+
+	if err := db.Close(); err != nil {
+		t.Errorf("test failed\n"+
+			"expected: %+v\n"+
+			"actual: %+v\n", nil, err)
 	}
 }

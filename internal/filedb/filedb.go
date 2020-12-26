@@ -36,6 +36,7 @@ func NewFileDB() *FileDB {
 	}
 }
 
+// openDB 는 path 경로의 데이터베이스 파일을 열어준다.
 func (f *FileDB) openDB(path string) (*bbolt.DB, error) {
 	f.dbmux.Lock()
 	defer f.dbmux.Unlock()
@@ -51,6 +52,20 @@ func (f *FileDB) openDB(path string) (*bbolt.DB, error) {
 
 	f.dbmap[path] = db
 	return db, nil
+}
+
+// Close 는 열려있는 모든 데이터베이스 파일을 닫아준다.
+func (f *FileDB) Close() error {
+	f.dbmux.Lock()
+	defer f.dbmux.Unlock()
+
+	for path, db := range f.dbmap {
+		if err := db.Close(); err != nil {
+			return fmt.Errorf("fail to close %s: %w", path, err)
+		}
+	}
+
+	return nil
 }
 
 func (f *FileDB) GetQueue(ctx context.Context, queue string) (*pb.Queue, error) {
