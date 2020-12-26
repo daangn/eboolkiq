@@ -16,16 +16,41 @@ package filedb
 
 import (
 	"context"
+	"fmt"
+	"sync"
 	"time"
+
+	"go.etcd.io/bbolt"
 
 	"github.com/daangn/eboolkiq/pb"
 )
 
 type FileDB struct {
+	dbmap map[string]*bbolt.DB
+	dbmux sync.Mutex
 }
 
 func NewFileDB() *FileDB {
-	return &FileDB{}
+	return &FileDB{
+		dbmap: make(map[string]*bbolt.DB, 1024),
+	}
+}
+
+func (f *FileDB) openDB(path string) (*bbolt.DB, error) {
+	f.dbmux.Lock()
+	defer f.dbmux.Unlock()
+
+	if db, ok := f.dbmap[path]; ok {
+		return db, nil
+	}
+
+	db, err := bbolt.Open(path, 0666, nil)
+	if err != nil {
+		return nil, fmt.Errorf("fail to open %s: %w", path, err)
+	}
+
+	f.dbmap[path] = db
+	return db, nil
 }
 
 func (f *FileDB) GetQueue(ctx context.Context, queue string) (*pb.Queue, error) {
