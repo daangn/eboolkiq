@@ -69,3 +69,37 @@ func TestFileDB_Close(t *testing.T) {
 			"actual: %+v\n", nil, err)
 	}
 }
+
+func TestFileDB_dbPath(t *testing.T) {
+	tests := []struct {
+		name string
+		db   *FileDB
+		path string
+	}{
+		{
+			name: "normal case",
+			db:   &FileDB{baseDir: ""},
+			path: dbFile,
+		}, {
+			name: "contains relative path on baseDir",
+			db:   &FileDB{baseDir: "test/../"},
+			path: dbFile,
+		}, {
+			name: "root path",
+			db:   &FileDB{baseDir: "/"},
+			path: "/" + dbFile,
+		},
+	}
+
+	for _, test := range tests {
+		path := test.db.dbPath()
+
+		if test.path != path {
+			t.Errorf("test failed\n"+
+				"case:     %+v\n"+
+				"expected: %+v\n"+
+				"actual:   %+v\n"+
+				"with:     %+v\n", test.name, test.path, path, test)
+		}
+	}
+}

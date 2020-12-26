@@ -17,6 +17,7 @@ package filedb
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -25,14 +26,21 @@ import (
 	"github.com/daangn/eboolkiq/pb"
 )
 
+const (
+	dbFile = "kv.db"
+)
+
 type FileDB struct {
+	baseDir string
+
 	dbmap map[string]*bbolt.DB
 	dbmux sync.Mutex
 }
 
-func NewFileDB() *FileDB {
+func NewFileDB(path string) *FileDB {
 	return &FileDB{
-		dbmap: make(map[string]*bbolt.DB, 1024),
+		baseDir: filepath.Clean(path),
+		dbmap:   make(map[string]*bbolt.DB, 1024),
 	}
 }
 
@@ -66,6 +74,13 @@ func (f *FileDB) Close() error {
 	}
 
 	return nil
+}
+
+func (f *FileDB) dbPath() string {
+	return filepath.Join(
+		f.baseDir,
+		dbFile,
+	)
 }
 
 func (f *FileDB) GetQueue(ctx context.Context, queue string) (*pb.Queue, error) {
