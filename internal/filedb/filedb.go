@@ -82,6 +82,7 @@ func (f *FileDB) Close() error {
 	return nil
 }
 
+// dbPath 는 queue 저장소의 경로를 알려준다.
 func (f *FileDB) dbPath() string {
 	return filepath.Join(
 		f.baseDir,
@@ -89,6 +90,7 @@ func (f *FileDB) dbPath() string {
 	)
 }
 
+// GetQueue 는 큐를 찾아준다. 큐가 존재하지 않을 경우, eboolkiq.ErrQueueNotFound 를 반환한다.
 func (f *FileDB) GetQueue(ctx context.Context, queue string) (*pb.Queue, error) {
 	db, err := f.openDB(f.dbPath())
 	if err != nil {
@@ -143,8 +145,40 @@ func (f *FileDB) ListQueues(ctx context.Context) ([]*pb.Queue, error) {
 	panic("implement me")
 }
 
+// CreateQueue 는 새로운 큐를 데이터베이스에 기록해준다. 생성하고자 하는 큐의 이름이 이미 존재할 경우
+// eboolkiq.ErrQueueExists 에러를 반환한다.
 func (f *FileDB) CreateQueue(ctx context.Context, queue *pb.Queue) (*pb.Queue, error) {
-	panic("implement me")
+	db, err := f.openDB(f.dbPath())
+	if err != nil {
+		return nil, err
+	}
+
+	queueBytes, err := proto.Marshal(queue)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := db.Update(func(tx *bbolt.Tx) error {
+		bucket, err := tx.CreateBucketIfNotExists(bucketQueue)
+		if err != nil {
+			return err
+		}
+
+		val := bucket.Get([]byte(queue.Name))
+		if val != nil {
+			return eboolkiq.ErrQueueExists
+		}
+
+		if err := bucket.Put([]byte(queue.Name), queueBytes); err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return queue, nil
 }
 
 func (f *FileDB) DeleteQueue(ctx context.Context, name string) error {
