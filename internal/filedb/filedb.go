@@ -185,8 +185,39 @@ func (f *FileDB) DeleteQueue(ctx context.Context, name string) error {
 	panic("implement me")
 }
 
+// UpdateQueue 는 생성된 큐의 정보를 업데이트 한다. 업데이트 하고자 하는 큐가 존재하지 않을 경우
+// eboolkiq.ErrQueueNotFound 를 반환한다.
 func (f *FileDB) UpdateQueue(ctx context.Context, queue *pb.Queue) (*pb.Queue, error) {
-	panic("implement me")
+	db, err := f.openDB(f.dbPath())
+	if err != nil {
+		return nil, err
+	}
+
+	queueBytes, err := proto.Marshal(queue)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := db.Update(func(tx *bbolt.Tx) error {
+		bucket := tx.Bucket(bucketQueue)
+		if bucket == nil {
+			return eboolkiq.ErrQueueNotFound
+		}
+
+		if val := bucket.Get([]byte(queue.Name)); val == nil {
+			return eboolkiq.ErrQueueNotFound
+		}
+
+		if err := bucket.Put([]byte(queue.Name), queueBytes); err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return queue, nil
 }
 
 func (f *FileDB) FlushQueue(ctx context.Context, name string) error {

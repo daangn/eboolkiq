@@ -213,3 +213,62 @@ func TestFileDB_CreateQueue(t *testing.T) {
 		}
 	}
 }
+
+func TestFileDB_UpdateQueue(t *testing.T) {
+	if err := os.MkdirAll("test/temp", 0775); err != nil {
+		t.Fatalf("fail to prepare test: %+v\n", err)
+		return
+	}
+	defer func() {
+		if err := os.RemoveAll("test/temp"); err != nil {
+			t.Fatalf("fail to cleanup test: %+v\n", err)
+		}
+	}()
+
+	db := &FileDB{
+		baseDir: "test/temp",
+		dbmap:   map[string]*bbolt.DB{},
+	}
+
+	if _, err := db.CreateQueue(context.Background(), &pb.Queue{Name: "test"}); err != nil {
+		t.Fatalf("fail to prepare test: %+v\n", err)
+	}
+
+	tests := []struct {
+		name  string
+		queue *pb.Queue
+		err   error
+	}{
+		{
+			name:  "normal case",
+			queue: &pb.Queue{Name: "test", MaxRetry: 3},
+			err:   nil,
+		}, {
+			name:  "try update anonymous queue",
+			queue: &pb.Queue{Name: "anonymous"},
+			err:   eboolkiq.ErrQueueNotFound,
+		},
+	}
+
+	for _, test := range tests {
+		queue, err := db.UpdateQueue(context.Background(), test.queue)
+
+		if !errors.Is(err, test.err) {
+			t.Errorf("test failed\n"+
+				"case:     %+v\n"+
+				"expected: %+v\n"+
+				"actual:   %+v\n", test.name, test.err, err)
+		}
+
+		if err != nil {
+			continue
+		}
+
+		if !proto.Equal(queue, test.queue) {
+			t.Errorf("test failed\n"+
+				"case:     %+v\n"+
+				"expected: %+v\n"+
+				"actual:   %+v\n", test.name, test.queue, queue)
+		}
+	}
+}
