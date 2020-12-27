@@ -1,11 +1,16 @@
 package filedb
 
 import (
+	"context"
 	"errors"
 	"os"
 	"testing"
 
 	"go.etcd.io/bbolt"
+	"google.golang.org/protobuf/proto"
+
+	"github.com/daangn/eboolkiq"
+	"github.com/daangn/eboolkiq/pb"
 )
 
 func TestFileDB_openDB(t *testing.T) {
@@ -100,6 +105,53 @@ func TestFileDB_dbPath(t *testing.T) {
 				"expected: %+v\n"+
 				"actual:   %+v\n"+
 				"with:     %+v\n", test.name, test.path, path, test)
+		}
+	}
+}
+
+func TestFileDB_GetQueue(t *testing.T) {
+	db := &FileDB{
+		baseDir: "test",
+		dbmap:   map[string]*bbolt.DB{},
+	}
+	tests := []struct {
+		name   string
+		search string
+		queue  *pb.Queue
+		err    error
+	}{
+		{
+			name:   "normal case",
+			search: "test",
+			queue:  &pb.Queue{Name: "test"},
+			err:    nil,
+		}, {
+			name:   "when queue not exists",
+			search: "notfound",
+			queue:  nil,
+			err:    eboolkiq.ErrQueueNotFound,
+		},
+	}
+
+	for _, test := range tests {
+		queue, err := db.GetQueue(context.Background(), test.search)
+
+		if !errors.Is(err, test.err) {
+			t.Errorf("test failed\n"+
+				"case:     %+v\n"+
+				"expected: %+v\n"+
+				"actual:   %+v\n", test.name, test.err, err)
+		}
+
+		if err != nil {
+			continue
+		}
+
+		if !proto.Equal(test.queue, queue) {
+			t.Errorf("test failed\n"+
+				"case:     %+v\n"+
+				"expected: %+v\n"+
+				"actual:   %+v\n", test.name, test.queue, queue)
 		}
 	}
 }

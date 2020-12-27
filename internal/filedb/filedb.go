@@ -22,12 +22,18 @@ import (
 	"time"
 
 	"go.etcd.io/bbolt"
+	"google.golang.org/protobuf/proto"
 
+	"github.com/daangn/eboolkiq"
 	"github.com/daangn/eboolkiq/pb"
 )
 
 const (
 	dbFile = "kv.db"
+)
+
+var (
+	bucketQueue = []byte("queue")
 )
 
 type FileDB struct {
@@ -84,7 +90,33 @@ func (f *FileDB) dbPath() string {
 }
 
 func (f *FileDB) GetQueue(ctx context.Context, queue string) (*pb.Queue, error) {
-	panic("implement me")
+	db, err := f.openDB(f.dbPath())
+	if err != nil {
+		return nil, err
+	}
+
+	var q pb.Queue
+	if err := db.View(func(tx *bbolt.Tx) error {
+		bucket := tx.Bucket(bucketQueue)
+		if bucket == nil {
+			return eboolkiq.ErrQueueNotFound
+		}
+
+		val := bucket.Get([]byte(queue))
+		if val == nil {
+			return eboolkiq.ErrQueueNotFound
+		}
+
+		if err := proto.Unmarshal(val, &q); err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return &q, nil
 }
 
 func (f *FileDB) PushJob(ctx context.Context, queue string, job *pb.Job) error {
