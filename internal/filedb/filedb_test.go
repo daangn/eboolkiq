@@ -114,6 +114,12 @@ func TestFileDB_GetQueue(t *testing.T) {
 		baseDir: "test",
 		dbmap:   map[string]*bbolt.DB{},
 	}
+	defer func() {
+		if err := db.Close(); err != nil {
+			t.Errorf("fail to cleanup test: %+v\n", err)
+		}
+	}()
+
 	tests := []struct {
 		name   string
 		search string
@@ -171,6 +177,12 @@ func TestFileDB_CreateQueue(t *testing.T) {
 		baseDir: "test/temp",
 		dbmap:   map[string]*bbolt.DB{},
 	}
+	defer func() {
+		if err := db.Close(); err != nil {
+			t.Errorf("fail to cleanup test: %+v\n", err)
+		}
+	}()
+
 	tests := []struct {
 		name  string
 		queue *pb.Queue
@@ -229,6 +241,11 @@ func TestFileDB_UpdateQueue(t *testing.T) {
 		baseDir: "test/temp",
 		dbmap:   map[string]*bbolt.DB{},
 	}
+	defer func() {
+		if err := db.Close(); err != nil {
+			t.Errorf("fail to cleanup test: %+v\n", err)
+		}
+	}()
 
 	if _, err := db.CreateQueue(context.Background(), &pb.Queue{Name: "test"}); err != nil {
 		t.Fatalf("fail to prepare test: %+v\n", err)
@@ -269,6 +286,80 @@ func TestFileDB_UpdateQueue(t *testing.T) {
 				"case:     %+v\n"+
 				"expected: %+v\n"+
 				"actual:   %+v\n", test.name, test.queue, queue)
+		}
+	}
+}
+
+func TestFileDB_ListQueues(t *testing.T) {
+	if err := os.MkdirAll("test/temp", 0775); err != nil {
+		t.Fatalf("fail to prepare test: %+v\n", err)
+		return
+	}
+	defer func() {
+		if err := os.RemoveAll("test/temp"); err != nil {
+			t.Fatalf("fail to cleanup test: %+v\n", err)
+		}
+	}()
+
+	tests := []struct {
+		name   string
+		db     *FileDB
+		queues []*pb.Queue
+		err    error
+	}{
+		{
+			name: "normal case",
+			db: &FileDB{
+				baseDir: "test",
+				dbmap:   map[string]*bbolt.DB{},
+			},
+			queues: []*pb.Queue{ // must be sorted
+				{Name: "bar"},
+				{Name: "baz"},
+				{Name: "foo"},
+				{Name: "test"},
+			},
+			err: nil,
+		}, {
+			name: "nothing exists",
+			db: &FileDB{
+				baseDir: "test/temp",
+				dbmap:   map[string]*bbolt.DB{},
+			},
+			queues: nil,
+			err:    nil,
+		},
+	}
+
+	for _, test := range tests {
+		queues, err := test.db.ListQueues(context.Background())
+
+		if !errors.Is(err, test.err) {
+			t.Errorf("test failed\n"+
+				"case:     %+v\n"+
+				"expected: %+v\n"+
+				"actual:   %+v\n", test.name, test.err, err)
+		}
+
+		if len(queues) != len(test.queues) {
+			t.Errorf("test failed\n"+
+				"case:     %+v\n"+
+				"expected: %+v\n"+
+				"actual:   %+v\n", test.name, test.queues, queues)
+		}
+
+		for i := 0; i < len(queues); i++ {
+			if !proto.Equal(queues[i], test.queues[i]) {
+				t.Errorf("test failed\n"+
+					"case:     %+v\n"+
+					"index:    %d\n"+
+					"expected: %+v\n"+
+					"actual:   %+v\n", test.name, i, test.queues[i], queues[i])
+			}
+		}
+
+		if err := test.db.Close(); err != nil {
+			t.Errorf("fail to cleanup test: %+v\n", err)
 		}
 	}
 }

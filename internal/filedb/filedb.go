@@ -141,8 +141,43 @@ func (f *FileDB) Failed(ctx context.Context, jobId string, errMsg string) error 
 	panic("implement me")
 }
 
+// ListQueues 는 모든 큐 목록을 조회한다. 큐가 하나도 없을 경우 nil 을 반환한다.
 func (f *FileDB) ListQueues(ctx context.Context) ([]*pb.Queue, error) {
-	panic("implement me")
+	db, err := f.openDB(f.dbPath())
+	if err != nil {
+		return nil, err
+	}
+
+	var queues []*pb.Queue
+
+	if err := db.View(func(tx *bbolt.Tx) error {
+		bucket := tx.Bucket(bucketQueue)
+		if bucket == nil {
+			return nil
+		}
+
+		if err := bucket.ForEach(func(k, v []byte) error {
+			if v == nil {
+				return nil
+			}
+
+			var queue pb.Queue
+			if err := proto.Unmarshal(v, &queue); err != nil {
+				return err
+			}
+
+			queues = append(queues, &queue)
+			return nil
+		}); err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return queues, nil
 }
 
 // CreateQueue 는 새로운 큐를 데이터베이스에 기록해준다. 생성하고자 하는 큐의 이름이 이미 존재할 경우
