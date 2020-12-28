@@ -29,7 +29,8 @@ import (
 )
 
 const (
-	dbFile = "kv.db"
+	dbFile    = "kv.db"
+	queueFile = "queue.db"
 )
 
 var (
@@ -87,6 +88,14 @@ func (f *FileDB) dbPath() string {
 	return filepath.Join(
 		f.baseDir,
 		dbFile,
+	)
+}
+
+func (f *FileDB) queuePath(queue string) string {
+	return filepath.Join(
+		f.baseDir,
+		filepath.Clean("/"+queue),
+		queueFile,
 	)
 }
 

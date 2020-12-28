@@ -109,6 +109,38 @@ func TestFileDB_dbPath(t *testing.T) {
 	}
 }
 
+func TestFileDB_queuePath(t *testing.T) {
+	db := &FileDB{baseDir: "test"}
+
+	tests := []struct {
+		name  string
+		queue string
+		path  string
+	}{
+		{
+			name:  "normal case",
+			queue: "test",
+			path:  "test/test/" + queueFile,
+		}, {
+			name:  "contains relative path",
+			queue: "foo/../../../",
+			path:  "test/" + queueFile,
+		},
+	}
+
+	for _, test := range tests {
+		path := db.queuePath(test.queue)
+
+		if test.path != path {
+			t.Errorf("test failed\n"+
+				"case:     %+v\n"+
+				"expected: %+v\n"+
+				"actual:   %+v\n"+
+				"with:     %+v\n", test.name, test.path, path, test)
+		}
+	}
+}
+
 func TestFileDB_GetQueue(t *testing.T) {
 	db := &FileDB{
 		baseDir: "test",
