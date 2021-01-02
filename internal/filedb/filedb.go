@@ -17,6 +17,7 @@ package filedb
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -55,6 +56,10 @@ func NewFileDB(path string) *FileDB {
 func (f *FileDB) openDB(path string) (*bbolt.DB, error) {
 	f.dbmux.Lock()
 	defer f.dbmux.Unlock()
+
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return nil, err
+	}
 
 	if db, ok := f.dbmap[path]; ok {
 		return db, nil

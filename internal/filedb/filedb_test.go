@@ -35,6 +35,10 @@ func TestFileDB_openDB(t *testing.T) {
 			name: "try open 0400 file",
 			path: "test/cannot_open.db",
 			err:  os.ErrPermission,
+		}, {
+			name: "try open not exists dir",
+			path: "test/not_exists/db.db",
+			err:  nil,
 		},
 	}
 
