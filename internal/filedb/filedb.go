@@ -57,12 +57,12 @@ func (f *FileDB) openDB(path string) (*bbolt.DB, error) {
 	f.dbmux.Lock()
 	defer f.dbmux.Unlock()
 
-	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
-		return nil, err
-	}
-
 	if db, ok := f.dbmap[path]; ok {
 		return db, nil
+	}
+
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return nil, err
 	}
 
 	db, err := bbolt.Open(path, 0666, nil)
