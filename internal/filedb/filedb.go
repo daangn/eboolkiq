@@ -230,8 +230,52 @@ func (f *FileDB) CreateQueue(ctx context.Context, queue *pb.Queue) (*pb.Queue, e
 	return queue, nil
 }
 
-func (f *FileDB) DeleteQueue(ctx context.Context, name string) error {
-	panic("implement me")
+// DeleteQueue 는 queue 를 삭제해 준다. 큐에 남아있던 Job 은 전부 지워지며 큐의 정보도 지워진다.
+func (f *FileDB) DeleteQueue(ctx context.Context, queue string) error {
+	db, err := f.openDB(f.dbPath())
+	if err != nil {
+		return err
+	}
+
+	// delete queue info
+	if err := db.Update(func(tx *bbolt.Tx) error {
+		bucket := tx.Bucket(bucketQueue)
+		if bucket == nil {
+			return eboolkiq.ErrQueueNotFound
+		}
+
+		cursor := bucket.Cursor()
+
+		if k, _ := cursor.Seek([]byte(queue)); k == nil {
+			return eboolkiq.ErrQueueNotFound
+		}
+
+		if err := cursor.Delete(); err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	f.dbmux.Lock()
+	defer f.dbmux.Unlock()
+
+	// delete job queue
+	path := f.queuePath(queue)
+	if db, ok := f.dbmap[path]; ok {
+		if err := db.Close(); err != nil {
+			return err
+		}
+		delete(f.dbmap, path)
+	}
+
+	if err := os.RemoveAll(path); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // UpdateQueue 는 생성된 큐의 정보를 업데이트 한다. 업데이트 하고자 하는 큐가 존재하지 않을 경우
