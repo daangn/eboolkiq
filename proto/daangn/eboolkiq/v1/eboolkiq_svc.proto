@@ -1,0 +1,95 @@
+// Copyright 2021 Danggeun Market Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package daangn.eboolkiq.v1;
+
+option go_package = "github.com/daangn/eboolkiq/pb/v1";
+option java_multiple_files = true;
+option java_outer_classname = "EboolkiqSvcProto";
+option java_package = "com.daangn.eboolkiq.v1";
+
+import "daangn/eboolkiq/task.proto";
+import "daangn/eboolkiq/queue.proto";
+import "google/protobuf/empty.proto";
+
+service EboolkiqSvc {
+  // CreateQueue creates a queue on the eboolkiq server.
+  rpc CreateQueue (CreateQueueReq) returns (daangn.eboolkiq.Queue);
+
+  // GetQueue gets queue from the eboolkiq server.
+  rpc GetQueue (GetQueueReq) returns (daangn.eboolkiq.Queue);
+
+  // UpdateQueue updates the queue on the eboolkiq server.
+  rpc UpdateQueue (UpdateQueueReq) returns (daangn.eboolkiq.Queue);
+
+  // DeleteQueue deletes the queue on the eboolkiq server.
+  rpc DeleteQueue (DeleteQueueReq) returns (google.protobuf.Empty);
+
+  // FlushQueue deletes all tasks from the queue.
+  rpc FlushQueue (FlushQueueReq) returns (google.protobuf.Empty);
+
+
+  // CreateTask creates a task in the queue.
+  rpc CreateTask (CreateTaskReq) returns (daangn.eboolkiq.Task);
+
+  // GetTask gets a task from the queue.
+  rpc GetTask (GetTaskReq) returns (daangn.eboolkiq.Task);
+
+  // UpdateTask updates a task from the queue.
+  rpc UpdateTask (UpdateTaskReq) returns (daangn.eboolkiq.Task);
+
+  // DeleteTask deletes a task from the queue.
+  rpc DeleteTask (DeleteTaskReq) returns (google.protobuf.Empty);
+}
+
+message CreateQueueReq {
+  string name = 1;
+}
+
+message GetQueueReq {
+  string name = 2;
+}
+
+message UpdateQueueReq {
+  daangn.eboolkiq.Queue queue = 1;
+}
+
+message DeleteQueueReq {
+  daangn.eboolkiq.Queue queue = 1;
+}
+
+message FlushQueueReq {
+  daangn.eboolkiq.Queue queue = 1;
+}
+
+message CreateTaskReq {
+  daangn.eboolkiq.Queue queue = 1;
+  daangn.eboolkiq.Task task = 2;
+}
+
+message GetTaskReq {
+  daangn.eboolkiq.Queue queue = 1;
+}
+
+message UpdateTaskReq {
+  daangn.eboolkiq.Queue queue = 1;
+  daangn.eboolkiq.Task task = 2;
+}
+
+message DeleteTaskReq {
+  daangn.eboolkiq.Queue queue = 1;
+  daangn.eboolkiq.Task task = 2;
+}
