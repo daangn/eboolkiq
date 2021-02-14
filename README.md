@@ -1,2 +1,2 @@
 # eboolkiq
-Simple async worker service using gRPC
+Simple async worker queue service using gRPC
