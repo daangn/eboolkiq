@@ -39,11 +39,6 @@ type eboolkiqSvc struct {
 }
 
 func NewEboolkiqSvc() (v1.EboolkiqSvcServer, error) {
-	db, err := memdb.NewMemDB()
-	if err != nil {
-		return nil, err
-	}
-
 	node, err := snowflake.NewNode(0)
 	if err != nil {
 		return nil, err
@@ -52,7 +47,7 @@ func NewEboolkiqSvc() (v1.EboolkiqSvcServer, error) {
 	return &eboolkiqSvc{
 		recvq: map[string]chan *pb.Task{},
 		node:  node,
-		db:    db,
+		db:    memdb.NewMemDB(),
 	}, nil
 }
 
