@@ -23,6 +23,7 @@ option java_package = "com.daangn.eboolkiq.v1";
 
 import "daangn/eboolkiq/task.proto";
 import "daangn/eboolkiq/queue.proto";
+import "google/protobuf/duration.proto";
 import "google/protobuf/empty.proto";
 
 service EboolkiqSvc {
@@ -56,11 +57,11 @@ service EboolkiqSvc {
 }
 
 message CreateQueueReq {
-  string name = 1;
+  daangn.eboolkiq.Queue queue = 1;
 }
 
 message GetQueueReq {
-  string name = 2;
+  string name = 1;
 }
 
 message UpdateQueueReq {
@@ -82,6 +83,7 @@ message CreateTaskReq {
 
 message GetTaskReq {
   daangn.eboolkiq.Queue queue = 1;
+  google.protobuf.Duration wait_time = 2;
 }
 
 message UpdateTaskReq {
