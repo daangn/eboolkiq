@@ -53,6 +53,10 @@ func NewEboolkiqSvc() (v1.EboolkiqSvcServer, error) {
 
 func (svc *eboolkiqSvc) CreateQueue(ctx context.Context, req *v1.CreateQueueReq) (*pb.Queue, error) {
 	_, err := svc.db.GetQueue(ctx, req.Queue.Name)
+	if err == nil {
+		return nil, eboolkiq.ErrQueueExists
+	}
+
 	if !errors.Is(err, eboolkiq.ErrQueueNotFound) {
 		return nil, err
 	}
