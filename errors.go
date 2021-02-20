@@ -20,6 +20,7 @@ import (
 )
 
 var (
+	ErrInternal      = NewStatusError(codes.Internal, "eboolkiq: internal error")
 	ErrQueueExists   = NewStatusError(codes.AlreadyExists, "eboolkiq: queue already exists")
 	ErrQueueNotFound = NewStatusError(codes.NotFound, "eboolkiq: queue not found")
 	ErrQueueEmpty    = NewStatusError(codes.NotFound, "eboolkiq: queue is empty")

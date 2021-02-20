@@ -26,6 +26,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 
+	"github.com/daangn/eboolkiq"
 	v1 "github.com/daangn/eboolkiq/pb/v1"
 	"github.com/daangn/eboolkiq/pkg/graceful"
 	"github.com/daangn/eboolkiq/service"
@@ -60,7 +61,9 @@ func main() {
 		),
 		grpc.UnaryInterceptor(
 			grpcmiddleware.ChainUnaryServer(
-				grpcrecovery.UnaryServerInterceptor(),
+				grpcrecovery.UnaryServerInterceptor(
+					grpcrecovery.WithRecoveryHandler(recoveryHandler),
+				),
 			),
 		),
 	)
@@ -83,4 +86,9 @@ func main() {
 	if err := g.Serve(lis); err != nil {
 		log.Panic().Msg("fail to serve grpc server")
 	}
+}
+
+func recoveryHandler(p interface{}) (err error) {
+	log.Error().Interface("msg", p).Msg("panic raised")
+	return eboolkiq.ErrInternal
 }
