@@ -19,7 +19,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/bwmarrin/snowflake"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -28,25 +27,19 @@ import (
 	"github.com/daangn/eboolkiq/db/memdb"
 	"github.com/daangn/eboolkiq/pb"
 	v1 "github.com/daangn/eboolkiq/pb/v1"
+	"github.com/daangn/eboolkiq/pkg/snowflake"
 )
 
 type eboolkiqSvc struct {
 	v1.UnimplementedEboolkiqSvcServer
 
 	recvq map[string]chan *pb.Task
-	node  *snowflake.Node
 	db    db.DB
 }
 
 func NewEboolkiqSvc() (v1.EboolkiqSvcServer, error) {
-	node, err := snowflake.NewNode(0)
-	if err != nil {
-		return nil, err
-	}
-
 	return &eboolkiqSvc{
 		recvq: map[string]chan *pb.Task{},
-		node:  node,
 		db:    memdb.NewMemDB(),
 	}, nil
 }
@@ -140,5 +133,5 @@ func (svc *eboolkiqSvc) newTask(q *pb.Queue, t *pb.Task) *pb.Task {
 }
 
 func (svc *eboolkiqSvc) newId() string {
-	return svc.node.Generate().String()
+	return snowflake.GenID().String()
 }
