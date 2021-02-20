@@ -15,7 +15,6 @@
 package memdb
 
 import (
-	"container/heap"
 	"context"
 	"sync"
 
@@ -26,14 +25,12 @@ import (
 
 func NewMemDB() db.DB {
 	return &memdb{
-		queues: map[string]*pb.Queue{},
-		tasks:  map[string]taskheap{},
+		queues: map[string]*queue{},
 	}
 }
 
 type memdb struct {
-	queues map[string]*pb.Queue
-	tasks  map[string]taskheap
+	queues map[string]*queue
 	mux    sync.RWMutex
 }
 
@@ -45,13 +42,21 @@ func (db *memdb) CreateQueue(ctx context.Context, queue *pb.Queue) error {
 		return eboolkiq.ErrQueueExists
 	}
 
-	db.queues[queue.Name] = queue
-	db.tasks[queue.Name] = taskheap{}
+	db.queues[queue.Name] = newQueue(queue)
 
 	return nil
 }
 
 func (db *memdb) GetQueue(ctx context.Context, name string) (*pb.Queue, error) {
+	queue, err := db.getQueue(name)
+	if err != nil {
+		return nil, err
+	}
+
+	return queue.Queue, nil
+}
+
+func (db *memdb) getQueue(name string) (*queue, error) {
 	db.mux.RLock()
 	defer db.mux.RUnlock()
 
@@ -59,35 +64,29 @@ func (db *memdb) GetQueue(ctx context.Context, name string) (*pb.Queue, error) {
 	if !ok {
 		return nil, eboolkiq.ErrQueueNotFound
 	}
+
 	return queue, nil
 }
 
 func (db *memdb) AddTask(ctx context.Context, queue *pb.Queue, task *pb.Task) error {
-	db.mux.Lock()
-	defer db.mux.Unlock()
-
-	tasks, ok := db.tasks[queue.Name]
-	if !ok {
-		return eboolkiq.ErrQueueNotFound
+	q, err := db.getQueue(queue.Name)
+	if err != nil {
+		return err
 	}
 
-	heap.Push(&tasks, task)
+	q.AddTask(task)
 	return nil
 }
 
 func (db *memdb) GetTask(ctx context.Context, queue *pb.Queue) (*pb.Task, error) {
-	db.mux.Lock()
-	defer db.mux.Unlock()
-
-	tasks, ok := db.tasks[queue.Name]
-	if !ok {
-		return nil, eboolkiq.ErrQueueNotFound
+	q, err := db.getQueue(queue.Name)
+	if err != nil {
+		return nil, err
 	}
 
-	if len(tasks) == 0 {
+	t := q.GetTask()
+	if t == nil {
 		return nil, eboolkiq.ErrQueueEmpty
 	}
-
-	task := heap.Pop(&tasks).(*pb.Task)
-	return task, nil
+	return t, nil
 }
