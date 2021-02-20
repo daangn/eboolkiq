@@ -20,6 +20,8 @@ import (
 	"strconv"
 	"time"
 
+	grpcmiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpcrecovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
@@ -56,11 +58,11 @@ func main() {
 				PermitWithoutStream: true,
 			},
 		),
-		// grpc.UnaryInterceptor(
-		// 	grpc_middleware.ChainUnaryServer(
-		// 		grpc_recovery.UnaryServerInterceptor(),
-		// 	),
-		// ),
+		grpc.UnaryInterceptor(
+			grpcmiddleware.ChainUnaryServer(
+				grpcrecovery.UnaryServerInterceptor(),
+			),
+		),
 	)
 
 	svc, err := service.NewEboolkiqSvc()
