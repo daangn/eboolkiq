@@ -45,6 +45,10 @@ func NewEboolkiqSvc() (v1.EboolkiqSvcServer, error) {
 }
 
 func (svc *eboolkiqSvc) CreateQueue(ctx context.Context, req *v1.CreateQueueReq) (*pb.Queue, error) {
+	if err := req.CheckValid(); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
 	_, err := svc.db.GetQueue(ctx, req.Queue.Name)
 	if err == nil {
 		return nil, eboolkiq.ErrQueueExists
@@ -63,6 +67,10 @@ func (svc *eboolkiqSvc) CreateQueue(ctx context.Context, req *v1.CreateQueueReq)
 }
 
 func (svc *eboolkiqSvc) GetQueue(ctx context.Context, req *v1.GetQueueReq) (*pb.Queue, error) {
+	if err := req.CheckValid(); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
 	queue, err := svc.db.GetQueue(ctx, req.Name)
 	if err != nil {
 		return nil, err
@@ -72,6 +80,10 @@ func (svc *eboolkiqSvc) GetQueue(ctx context.Context, req *v1.GetQueueReq) (*pb.
 }
 
 func (svc *eboolkiqSvc) CreateTask(ctx context.Context, req *v1.CreateTaskReq) (*pb.Task, error) {
+	if err := req.CheckValid(); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
 	queue, err := svc.db.GetQueue(ctx, req.Queue.Name)
 	if err != nil {
 		return nil, err
@@ -95,6 +107,10 @@ func (svc *eboolkiqSvc) CreateTask(ctx context.Context, req *v1.CreateTaskReq) (
 }
 
 func (svc *eboolkiqSvc) GetTask(ctx context.Context, req *v1.GetTaskReq) (*pb.Task, error) {
+	if err := req.CheckValid(); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
 	queue, err := svc.db.GetQueue(ctx, req.Queue.Name)
 	if err != nil {
 		return nil, err
