@@ -21,6 +21,10 @@ option java_multiple_files = true;
 option java_outer_classname = "TaskProto";
 option java_package = "com.daangn.eboolkiq";
 
+import "google/protobuf/struct.proto";
+
 message Task {
   string id = 1;
+  string desc = 2;
+  google.protobuf.ListValue params = 3;
 }
