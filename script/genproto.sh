@@ -11,7 +11,7 @@ rm -rf pb/*
 
 
 # generate protobuf file
-for f in $(find ./proto -name "*.proto")
+for f in $(find ./proto/daangn -name "*.proto")
 do
   protoc -I ./proto \
     --go_out pb \
