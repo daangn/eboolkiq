@@ -37,7 +37,8 @@ var (
 )
 
 func init() {
-	flag.IntVar(&port, "p", 8080, "listening port")
+	flag.IntVar(&port, "p", 8080, "grpc server listening port")
+	flag.Parse()
 }
 
 func main() {
