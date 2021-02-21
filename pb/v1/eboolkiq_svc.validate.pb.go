@@ -103,3 +103,23 @@ func (x *GetTaskReq) CheckValid() error {
 func (x *GetTaskReq) IsValid() bool {
 	return x.CheckValid() == nil
 }
+
+func (x *FlushQueueReq) CheckValid() error {
+	if x == nil {
+		return protoimpl.X.NewError("invalid nil FlushQueueReq")
+	}
+
+	if x.Queue == nil {
+		return protoimpl.X.NewError("empty required field: FlushQueueReq.queue")
+	}
+
+	if x.Queue.Name == "" {
+		return protoimpl.X.NewError("empty required field: FlushQueueReq.queue.name")
+	}
+
+	return nil
+}
+
+func (x *FlushQueueReq) IsValid() bool {
+	return x.CheckValid() == nil
+}

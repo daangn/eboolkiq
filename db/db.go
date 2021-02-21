@@ -36,4 +36,7 @@ type DB interface {
 	// GetTask gets task from queue.
 	// Returns eboolkiq.ErrQueueEmpty if queue has no task.
 	GetTask(ctx context.Context, queue *pb.Queue) (*pb.Task, error)
+
+	// FlushTask flush all task from queue.
+	FlushTask(ctx context.Context, queue *pb.Queue)
 }

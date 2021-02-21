@@ -46,3 +46,11 @@ func (q *queue) GetTask() *pb.Task {
 
 	return q.tasks.dequeue()
 }
+
+func (q *queue) Flush() {
+	q.mux.Lock()
+	defer q.mux.Unlock()
+
+	q.tasks.flush()
+	return
+}

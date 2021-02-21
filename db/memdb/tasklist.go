@@ -96,3 +96,19 @@ func (tl *tasklist) Len() uint64 {
 
 	return tl.len
 }
+
+func (tl *tasklist) flush() {
+	tl.mux.Lock()
+	defer tl.mux.Unlock()
+
+	tl.len = 0
+	for tl.first != nil {
+		temp := tl.first
+		tl.first = tl.first.next
+
+		temp.cleanup()
+		tl.epool.Put(temp)
+	}
+	tl.last = nil
+	return
+}

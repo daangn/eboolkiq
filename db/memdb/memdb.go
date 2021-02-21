@@ -90,3 +90,12 @@ func (db *memdb) GetTask(ctx context.Context, queue *pb.Queue) (*pb.Task, error)
 	}
 	return t, nil
 }
+
+func (db *memdb) FlushTask(ctx context.Context, queue *pb.Queue) {
+	q, err := db.getQueue(queue.Name)
+	if err != nil {
+		return
+	}
+
+	q.Flush()
+}

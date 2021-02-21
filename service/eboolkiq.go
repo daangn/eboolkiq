@@ -21,6 +21,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/daangn/eboolkiq"
 	"github.com/daangn/eboolkiq/db"
@@ -141,6 +142,21 @@ func (svc *eboolkiqSvc) GetTask(ctx context.Context, req *v1.GetTaskReq) (*pb.Ta
 	case task := <-svc.recvq[queue.Name]:
 		return task, nil
 	}
+}
+
+func (svc *eboolkiqSvc) FlushQueue(ctx context.Context, req *v1.FlushQueueReq) (*emptypb.Empty, error) {
+	if err := req.CheckValid(); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	queue, err := svc.db.GetQueue(ctx, req.Queue.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	svc.db.FlushTask(ctx, queue)
+
+	return &emptypb.Empty{}, nil
 }
 
 func (svc *eboolkiqSvc) newTask(q *pb.Queue, t *pb.Task) *pb.Task {
