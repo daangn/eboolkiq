@@ -68,6 +68,21 @@ func (db *memdb) getQueue(name string) (*queue, error) {
 	return queue, nil
 }
 
+func (db *memdb) DeleteQueue(ctx context.Context, queue *pb.Queue) error {
+	q, err := db.getQueue(queue.Name)
+	if err != nil {
+		// Queue does not exists. (Already deleted)
+		return nil
+	}
+	defer q.Flush()
+
+	db.mux.Lock()
+	delete(db.queues, queue.Name)
+	db.mux.Unlock()
+
+	return nil
+}
+
 func (db *memdb) AddTask(ctx context.Context, queue *pb.Queue, task *pb.Task) error {
 	q, err := db.getQueue(queue.Name)
 	if err != nil {

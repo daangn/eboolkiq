@@ -29,6 +29,9 @@ type DB interface {
 	// Returns eboolkiq.ErrQueueNotFound if queue not found.
 	GetQueue(ctx context.Context, name string) (*pb.Queue, error)
 
+	// DeleteQueue deletes queue from db.
+	DeleteQueue(ctx context.Context, queue *pb.Queue) error
+
 	// AddTask add task to queue.
 	// Returns eboolkiq.ErrQueueNotFound if queue not found.
 	AddTask(ctx context.Context, queue *pb.Queue, task *pb.Task) error

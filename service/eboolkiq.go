@@ -78,6 +78,18 @@ func (svc *eboolkiqSvc) GetQueue(ctx context.Context, req *v1.GetQueueReq) (*pb.
 	return queue, nil
 }
 
+func (svc *eboolkiqSvc) DeleteQueue(ctx context.Context, req *v1.DeleteQueueReq) (*emptypb.Empty, error) {
+	if err := req.CheckValid(); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	if err := svc.db.DeleteQueue(ctx, req.Queue); err != nil {
+		return nil, err
+	}
+
+	return new(emptypb.Empty), nil
+}
+
 func (svc *eboolkiqSvc) CreateTask(ctx context.Context, req *v1.CreateTaskReq) (*pb.Task, error) {
 	if err := req.CheckValid(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
