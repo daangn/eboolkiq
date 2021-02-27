@@ -139,7 +139,7 @@ func (svc *eboolkiqSvc) GetTask(ctx context.Context, req *v1.GetTaskReq) (*pb.Ta
 
 	d := req.WaitTime.AsDuration()
 	if d <= 0 {
-		return nil, status.Error(codes.NotFound, eboolkiq.ErrQueueEmpty.Error())
+		return nil, eboolkiq.ErrQueueEmpty
 	}
 
 	if _, ok := svc.recvq[queue.Name]; !ok {
@@ -148,7 +148,7 @@ func (svc *eboolkiqSvc) GetTask(ctx context.Context, req *v1.GetTaskReq) (*pb.Ta
 
 	select {
 	case <-time.After(d):
-		return nil, status.Error(codes.NotFound, eboolkiq.ErrQueueEmpty.Error())
+		return nil, eboolkiq.ErrQueueEmpty
 	case task := <-svc.recvq[queue.Name]:
 		return task, nil
 	}
