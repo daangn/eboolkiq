@@ -1,7 +1,6 @@
 package memdb
 
 import (
-	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -78,15 +77,12 @@ func TestTasklist(t *testing.T) {
 func testTasklist_enqueue(tl *tasklist, n int) func(t *testing.T) {
 	return func(t *testing.T) {
 		for i := 0; i < n; i++ {
-			tl.enqueue(&pb.Task{
-				Id: strconv.Itoa(i),
-			})
+			tl.enqueue(new(pb.Task))
 		}
 
 		e := tl.first
 		for i := 0; i < n; i++ {
 			assert.NotNil(t, e)
-			assert.Equal(t, e.Id, strconv.Itoa(i))
 			e = e.next
 		}
 	}
@@ -97,7 +93,6 @@ func testTasklist_dequeue(tl *tasklist, n int) func(t *testing.T) {
 		for i := 0; i < n; i++ {
 			task := tl.dequeue()
 			assert.NotNil(t, task)
-			assert.Equal(t, task.Id, strconv.Itoa(i))
 		}
 	}
 }

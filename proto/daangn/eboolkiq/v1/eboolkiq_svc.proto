@@ -33,9 +33,6 @@ service EboolkiqSvc {
   // GetQueue gets queue from the eboolkiq server.
   rpc GetQueue (GetQueueReq) returns (daangn.eboolkiq.Queue);
 
-  // UpdateQueue updates the queue on the eboolkiq server.
-  rpc UpdateQueue (UpdateQueueReq) returns (daangn.eboolkiq.Queue);
-
   // DeleteQueue deletes the queue on the eboolkiq server.
   rpc DeleteQueue (DeleteQueueReq) returns (google.protobuf.Empty);
 
@@ -48,12 +45,6 @@ service EboolkiqSvc {
 
   // GetTask gets a task from the queue.
   rpc GetTask (GetTaskReq) returns (daangn.eboolkiq.Task);
-
-  // UpdateTask updates a task from the queue.
-  rpc UpdateTask (UpdateTaskReq) returns (daangn.eboolkiq.Task);
-
-  // DeleteTask deletes a task from the queue.
-  rpc DeleteTask (DeleteTaskReq) returns (google.protobuf.Empty);
 }
 
 message CreateQueueReq {
@@ -84,14 +75,4 @@ message CreateTaskReq {
 message GetTaskReq {
   daangn.eboolkiq.Queue queue = 1;
   google.protobuf.Duration wait_time = 2;
-}
-
-message UpdateTaskReq {
-  daangn.eboolkiq.Queue queue = 1;
-  daangn.eboolkiq.Task task = 2;
-}
-
-message DeleteTaskReq {
-  daangn.eboolkiq.Queue queue = 1;
-  daangn.eboolkiq.Task task = 2;
 }

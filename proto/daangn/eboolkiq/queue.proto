@@ -22,6 +22,5 @@ option java_outer_classname = "QueueProto";
 option java_package = "com.daangn.eboolkiq";
 
 message Queue {
-  string id = 1;
-  string name = 2;
+  string name = 1;
 }

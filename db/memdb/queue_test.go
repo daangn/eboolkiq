@@ -15,43 +15,37 @@
 package memdb
 
 import (
-	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/daangn/eboolkiq/pb"
-	"github.com/daangn/eboolkiq/pkg/snowflake"
 )
 
 func TestQueue(t *testing.T) {
 	q := newQueue(&pb.Queue{
-		Id:   snowflake.GenID().String(),
 		Name: "test",
 	})
 	assert.NotNil(t, q)
-	assert.NotEmpty(t, q.Id)
 	assert.Equal(t, "test", q.Name)
 	assert.NotNil(t, q.tasks)
 
 	t.Run("AddTask", func(t *testing.T) {
 		for i := 0; i < 10; i++ {
-			q.AddTask(&pb.Task{
-				Id: strconv.Itoa(i),
-			})
+			q.AddTask(new(pb.Task))
 		}
 	})
 
 	t.Run("GetTask", func(t *testing.T) {
 		for i := 0; i < 10; i++ {
 			task := q.GetTask()
-			assert.Equal(t, strconv.Itoa(i), task.Id)
+			assert.NotNil(t, task)
 		}
 	})
 
 	t.Run("AddTask", func(t *testing.T) {
 		for i := 0; i < 10; i++ {
-			q.AddTask(&pb.Task{})
+			q.AddTask(new(pb.Task))
 		}
 	})
 

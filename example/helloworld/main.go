@@ -70,8 +70,8 @@ func spawnTask(queue *pb.Queue, svc v1.EboolkiqSvcClient) {
 		if _, err := svc.CreateTask(ctx, &v1.CreateTaskReq{
 			Queue: queue,
 			Task: &pb.Task{
-				Desc:   "printTask",
-				Params: params,
+				Params:      params,
+				Description: "printTask",
 			},
 		}); err != nil {
 			log.Panic().Err(err).Send()
@@ -90,7 +90,7 @@ func handleTask(queue *pb.Queue, svc v1.EboolkiqSvcClient) {
 			log.Panic().Err(err).Send()
 		}
 
-		fmt.Print(resp.Desc, ": ")
+		fmt.Print(resp.Description, ": ")
 		fmt.Println(resp.Params.AsSlice()...)
 	}
 }

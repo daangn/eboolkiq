@@ -28,7 +28,6 @@ import (
 	"github.com/daangn/eboolkiq/db/memdb"
 	"github.com/daangn/eboolkiq/pb"
 	v1 "github.com/daangn/eboolkiq/pb/v1"
-	"github.com/daangn/eboolkiq/pkg/snowflake"
 )
 
 type eboolkiqSvc struct {
@@ -59,7 +58,6 @@ func (svc *eboolkiqSvc) CreateQueue(ctx context.Context, req *v1.CreateQueueReq)
 		return nil, err
 	}
 
-	req.Queue.Id = svc.newId()
 	if err := svc.db.CreateQueue(ctx, req.Queue); err != nil {
 		return nil, err
 	}
@@ -160,10 +158,5 @@ func (svc *eboolkiqSvc) FlushQueue(ctx context.Context, req *v1.FlushQueueReq) (
 }
 
 func (svc *eboolkiqSvc) newTask(q *pb.Queue, t *pb.Task) *pb.Task {
-	t.Id = svc.newId()
 	return t
-}
-
-func (svc *eboolkiqSvc) newId() string {
-	return snowflake.GenID().String()
 }
