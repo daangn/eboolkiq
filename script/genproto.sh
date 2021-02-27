@@ -7,7 +7,7 @@ go mod tidy && go install \
 
 
 # remove old pb files
-rm -rf pb/*
+find ./pb -name "*.pb.go" -delete
 
 
 # generate protobuf file
@@ -23,5 +23,5 @@ done
 
 
 # move and delete directories
-mv pb/daangn/eboolkiq/* pb/ \
-&& find ./pb -type d -empty -delete
+cp -fR pb/daangn/eboolkiq/* pb/ \
+&& rm -rf pb/daangn
