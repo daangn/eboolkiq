@@ -123,3 +123,23 @@ func (x *FlushQueueReq) CheckValid() error {
 func (x *FlushQueueReq) IsValid() bool {
 	return x.CheckValid() == nil
 }
+
+func (x *DeleteQueueReq) CheckValid() error {
+	if x == nil {
+		return protoimpl.X.NewError("invalid nil DeleteQueueReq")
+	}
+
+	if x.Queue == nil {
+		return protoimpl.X.NewError("empty required field: DeleteQueueReq.queue")
+	}
+
+	if x.Queue.Name == "" {
+		return protoimpl.X.NewError("empty required field: DeleteQueueReq.queue.name")
+	}
+
+	return nil
+}
+
+func (x *DeleteQueueReq) IsValid() bool {
+	return x.CheckValid() == nil
+}

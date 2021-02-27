@@ -478,3 +478,90 @@ func TestGetTaskReq_IsValid(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteQueueReq_CheckValid(t *testing.T) {
+	tests := []struct {
+		name    string
+		req     *DeleteQueueReq
+		wantErr bool
+	}{
+		{
+			name:    "nil request",
+			req:     nil,
+			wantErr: true,
+		}, {
+			name: "empty queue",
+			req: &DeleteQueueReq{
+				Queue: nil,
+			},
+			wantErr: true,
+		}, {
+			name: "empty queue name",
+			req: &DeleteQueueReq{
+				Queue: &pb.Queue{
+					Name: "",
+				},
+			},
+			wantErr: true,
+		}, {
+			name: "valid request",
+			req: &DeleteQueueReq{
+				Queue: &pb.Queue{
+					Name: "test",
+				},
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if err := test.req.CheckValid(); (err != nil) != test.wantErr {
+				t.Errorf("CheckValid() error = %v, wantErr %v", err, test.wantErr)
+			}
+		})
+	}
+}
+
+func TestDeleteQueueReq_IsValid(t *testing.T) {
+	tests := []struct {
+		name string
+		req  *DeleteQueueReq
+		want bool
+	}{
+		{
+			name: "nil request",
+			req:  nil,
+			want: false,
+		}, {
+			name: "empty queue",
+			req: &DeleteQueueReq{
+				Queue: nil,
+			},
+			want: false,
+		}, {
+			name: "empty queue name",
+			req: &DeleteQueueReq{
+				Queue: &pb.Queue{
+					Name: "",
+				},
+			},
+			want: false,
+		}, {
+			name: "valid request",
+			req: &DeleteQueueReq{
+				Queue: &pb.Queue{
+					Name: "test",
+				},
+			},
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.req.IsValid(); got != tt.want {
+				t.Errorf("IsValid() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
