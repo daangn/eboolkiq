@@ -27,9 +27,9 @@ import (
 	"google.golang.org/grpc/keepalive"
 
 	"github.com/daangn/eboolkiq"
-	v1 "github.com/daangn/eboolkiq/pb/v1"
+	pbV1 "github.com/daangn/eboolkiq/pb/v1"
 	"github.com/daangn/eboolkiq/pkg/graceful"
-	"github.com/daangn/eboolkiq/service"
+	svcV1 "github.com/daangn/eboolkiq/service/v1"
 )
 
 var (
@@ -69,12 +69,12 @@ func main() {
 		),
 	)
 
-	svc, err := service.NewEboolkiqSvc()
+	eboolkiqSvcV1, err := svcV1.NewEboolkiqSvc()
 	if err != nil {
 		log.Panic().Err(err).Msg("fail to init eboolkiq service")
 	}
 
-	v1.RegisterEboolkiqSvcServer(g, svc)
+	pbV1.RegisterEboolkiqSvcServer(g, eboolkiqSvcV1)
 
 	lis, err := net.Listen("tcp", ":"+strconv.Itoa(port))
 	if err != nil {
