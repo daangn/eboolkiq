@@ -22,8 +22,24 @@ option java_outer_classname = "TaskProto";
 option java_package = "com.daangn.eboolkiq";
 
 import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
 
 message Task {
-  google.protobuf.ListValue params = 1;
-  string description = 2;
+  // id is unique value that identifies the task
+  string id = 1;
+
+  // params is the parameter for processing the task.
+  google.protobuf.ListValue params = 2;
+
+  // description is the description of the task.
+  string description = 3;
+
+  // deadline is the deadline of the task.
+  //
+  // If task is fetched, the task should be finished before deadline.
+  // After the deadline is exceeded, the task is treated as failed.
+  google.protobuf.Timestamp deadline = 4;
+
+  // attempt_count is the number of times the task was attempted.
+  uint32 attempt_count = 5;
 }

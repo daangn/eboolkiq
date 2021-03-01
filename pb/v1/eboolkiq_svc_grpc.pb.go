@@ -32,6 +32,8 @@ type EboolkiqSvcClient interface {
 	CreateTask(ctx context.Context, in *CreateTaskReq, opts ...grpc.CallOption) (*pb.Task, error)
 	// GetTask gets a task from the queue.
 	GetTask(ctx context.Context, in *GetTaskReq, opts ...grpc.CallOption) (*pb.Task, error)
+	// FinishTask set task as finished.
+	FinishTask(ctx context.Context, in *FinishTaskReq, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type eboolkiqSvcClient struct {
@@ -96,6 +98,15 @@ func (c *eboolkiqSvcClient) GetTask(ctx context.Context, in *GetTaskReq, opts ..
 	return out, nil
 }
 
+func (c *eboolkiqSvcClient) FinishTask(ctx context.Context, in *FinishTaskReq, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, "/daangn.eboolkiq.v1.EboolkiqSvc/FinishTask", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // EboolkiqSvcServer is the server API for EboolkiqSvc service.
 // All implementations must embed UnimplementedEboolkiqSvcServer
 // for forward compatibility
@@ -112,6 +123,8 @@ type EboolkiqSvcServer interface {
 	CreateTask(context.Context, *CreateTaskReq) (*pb.Task, error)
 	// GetTask gets a task from the queue.
 	GetTask(context.Context, *GetTaskReq) (*pb.Task, error)
+	// FinishTask set task as finished.
+	FinishTask(context.Context, *FinishTaskReq) (*emptypb.Empty, error)
 	mustEmbedUnimplementedEboolkiqSvcServer()
 }
 
@@ -136,6 +149,9 @@ func (UnimplementedEboolkiqSvcServer) CreateTask(context.Context, *CreateTaskReq
 }
 func (UnimplementedEboolkiqSvcServer) GetTask(context.Context, *GetTaskReq) (*pb.Task, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTask not implemented")
+}
+func (UnimplementedEboolkiqSvcServer) FinishTask(context.Context, *FinishTaskReq) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FinishTask not implemented")
 }
 func (UnimplementedEboolkiqSvcServer) mustEmbedUnimplementedEboolkiqSvcServer() {}
 
@@ -258,6 +274,24 @@ func _EboolkiqSvc_GetTask_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _EboolkiqSvc_FinishTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FinishTaskReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EboolkiqSvcServer).FinishTask(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/daangn.eboolkiq.v1.EboolkiqSvc/FinishTask",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EboolkiqSvcServer).FinishTask(ctx, req.(*FinishTaskReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // EboolkiqSvc_ServiceDesc is the grpc.ServiceDesc for EboolkiqSvc service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -288,6 +322,10 @@ var EboolkiqSvc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetTask",
 			Handler:    _EboolkiqSvc_GetTask_Handler,
+		},
+		{
+			MethodName: "FinishTask",
+			Handler:    _EboolkiqSvc_FinishTask_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

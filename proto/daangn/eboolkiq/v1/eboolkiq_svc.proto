@@ -45,6 +45,9 @@ service EboolkiqSvc {
 
   // GetTask gets a task from the queue.
   rpc GetTask (GetTaskReq) returns (daangn.eboolkiq.Task);
+
+  // FinishTask set task as finished.
+  rpc FinishTask (FinishTaskReq) returns (google.protobuf.Empty);
 }
 
 message CreateQueueReq {
@@ -75,4 +78,12 @@ message CreateTaskReq {
 message GetTaskReq {
   daangn.eboolkiq.Queue queue = 1;
   google.protobuf.Duration wait_time = 2;
+  bool auto_finish = 3;
+}
+
+message FinishTaskReq {
+  daangn.eboolkiq.Queue queue = 1;
+  daangn.eboolkiq.Task task = 2;
+  bool failed = 3;
+  string message = 4;
 }

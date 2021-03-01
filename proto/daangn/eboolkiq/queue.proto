@@ -21,6 +21,23 @@ option java_multiple_files = true;
 option java_outer_classname = "QueueProto";
 option java_package = "com.daangn.eboolkiq";
 
+import "google/protobuf/duration.proto";
+
 message Queue {
+  // name is the name of queue.
+  // name must be unique and must consist of alphanumeric and dot(.).
   string name = 1;
+
+  // task_timeout is the duration to wait for the task to complete its
+  // operation. The max value of task_timeout is 10 minute.
+  //
+  // If the task_timeout is over 1s and the task_timeout has elapsed since
+  // the task was taken, the task is considered failed and retried according
+  // to the value of the max_retry_count.
+  google.protobuf.Duration task_timeout = 2;
+
+  // max_retry_count is the count to retry task on failed its operation.
+  //
+  // If the task fails over max_retry_count, the task will be disappear.
+  uint32 max_retry_count = 3;
 }

@@ -143,3 +143,31 @@ func (x *DeleteQueueReq) CheckValid() error {
 func (x *DeleteQueueReq) IsValid() bool {
 	return x.CheckValid() == nil
 }
+
+func (x *FinishTaskReq) CheckValid() error {
+	if x == nil {
+		return protoimpl.X.NewError("invalid nil FinishTaskReq")
+	}
+
+	if x.Queue == nil {
+		return protoimpl.X.NewError("empty required field: FinishTaskReq.queue")
+	}
+
+	if x.Queue.Name == "" {
+		return protoimpl.X.NewError("empty required field: FinishTaskReq.queue.name")
+	}
+
+	if x.Task == nil {
+		return protoimpl.X.NewError("empty required field: FinishTaskReq.task")
+	}
+
+	if x.Task.Id == "" {
+		return protoimpl.X.NewError("empty required field: FinishTaskReq.task.id")
+	}
+
+	return nil
+}
+
+func (x *FinishTaskReq) IsValid() bool {
+	return x.CheckValid() == nil
+}

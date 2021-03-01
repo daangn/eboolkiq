@@ -565,3 +565,111 @@ func TestDeleteQueueReq_IsValid(t *testing.T) {
 		})
 	}
 }
+
+func TestFinishTaskReq_CheckValid(t *testing.T) {
+	tests := []struct {
+		name    string
+		req     *FinishTaskReq
+		wantErr bool
+	}{
+		{
+			name:    "nil request",
+			req:     nil,
+			wantErr: true,
+		}, {
+			name: "empty queue",
+			req: &FinishTaskReq{
+				Queue: nil,
+			},
+			wantErr: true,
+		}, {
+			name: "empty queue name",
+			req: &FinishTaskReq{
+				Queue: &pb.Queue{Name: ""},
+			},
+			wantErr: true,
+		}, {
+			name: "empty task",
+			req: &FinishTaskReq{
+				Queue: &pb.Queue{Name: "test"},
+				Task:  nil,
+			},
+			wantErr: true,
+		}, {
+			name: "empty task id",
+			req: &FinishTaskReq{
+				Queue: &pb.Queue{Name: "test"},
+				Task:  &pb.Task{Id: ""},
+			},
+			wantErr: true,
+		}, {
+			name: "valid request",
+			req: &FinishTaskReq{
+				Queue: &pb.Queue{Name: "test"},
+				Task:  &pb.Task{Id: "qwerty1234"},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.req.CheckValid(); (err != nil) != tt.wantErr {
+				t.Errorf("CheckValid() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestFinishTaskReq_IsValid(t *testing.T) {
+	tests := []struct {
+		name string
+		req  *FinishTaskReq
+		want bool
+	}{
+		{
+			name: "nil request",
+			req:  nil,
+			want: false,
+		}, {
+			name: "empty queue",
+			req: &FinishTaskReq{
+				Queue: nil,
+			},
+			want: false,
+		}, {
+			name: "empty queue name",
+			req: &FinishTaskReq{
+				Queue: &pb.Queue{Name: ""},
+			},
+			want: false,
+		}, {
+			name: "empty task",
+			req: &FinishTaskReq{
+				Queue: &pb.Queue{Name: "test"},
+				Task:  nil,
+			},
+			want: false,
+		}, {
+			name: "empty task id",
+			req: &FinishTaskReq{
+				Queue: &pb.Queue{Name: "test"},
+				Task:  &pb.Task{Id: ""},
+			},
+			want: false,
+		}, {
+			name: "valid request",
+			req: &FinishTaskReq{
+				Queue: &pb.Queue{Name: "test"},
+				Task:  &pb.Task{Id: "qwerty1234"},
+			},
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.req.IsValid(); got != tt.want {
+				t.Errorf("IsValid() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
