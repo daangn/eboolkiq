@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// http://www.apache.org/licenses/LICENSE-2.0
+//     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,15 +15,12 @@
 package memdb
 
 import (
-	"sync"
-
 	"github.com/daangn/eboolkiq/pb"
 )
 
 type queue struct {
 	*pb.Queue
 	tasks *tasklist
-	mux   sync.Mutex
 }
 
 func newQueue(q *pb.Queue) *queue {
@@ -34,23 +31,14 @@ func newQueue(q *pb.Queue) *queue {
 }
 
 func (q *queue) AddTask(t *pb.Task) {
-	q.mux.Lock()
-	defer q.mux.Unlock()
-
 	q.tasks.enqueue(t)
 }
 
 func (q *queue) GetTask() *pb.Task {
-	q.mux.Lock()
-	defer q.mux.Unlock()
-
 	return q.tasks.dequeue()
 }
 
 func (q *queue) Flush() {
-	q.mux.Lock()
-	defer q.mux.Unlock()
-
 	q.tasks.flush()
 	return
 }
