@@ -19,9 +19,11 @@ import (
 	"errors"
 	"time"
 
+	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/daangn/eboolkiq"
 	"github.com/daangn/eboolkiq/db"
@@ -130,6 +132,16 @@ func (svc *eboolkiqSvc) GetTask(ctx context.Context, req *v1.GetTaskReq) (*pb.Ta
 	task, err := svc.db.GetTask(ctx, queue)
 	if err == nil {
 		// got task. just return
+		task.AttemptCount++
+
+		if !req.AutoFinish {
+			if queue.TaskTimeout != nil {
+				task.Deadline = timestamppb.New(
+					time.Now().Add(queue.TaskTimeout.AsDuration()))
+				svc.db.AddWorking(ctx, queue, task)
+			}
+		}
+
 		return task, nil
 	}
 
@@ -150,6 +162,16 @@ func (svc *eboolkiqSvc) GetTask(ctx context.Context, req *v1.GetTaskReq) (*pb.Ta
 	case <-time.After(d):
 		return nil, eboolkiq.ErrQueueEmpty
 	case task := <-svc.recvq[queue.Name]:
+		task.AttemptCount++
+
+		if !req.AutoFinish {
+			if queue.TaskTimeout != nil {
+				task.Deadline = timestamppb.New(
+					time.Now().Add(queue.TaskTimeout.AsDuration()))
+				svc.db.AddWorking(ctx, queue, task)
+			}
+		}
+
 		return task, nil
 	}
 }
@@ -169,6 +191,39 @@ func (svc *eboolkiqSvc) FlushQueue(ctx context.Context, req *v1.FlushQueueReq) (
 	return &emptypb.Empty{}, nil
 }
 
+func (svc *eboolkiqSvc) FinishTask(ctx context.Context, req *v1.FinishTaskReq) (*emptypb.Empty, error) {
+	if err := req.CheckValid(); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	queue, err := svc.db.GetQueue(ctx, req.Queue.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	task, err := svc.db.FindAndDeleteWorking(ctx, queue, req.Task)
+	if err != nil {
+		return nil, err
+	}
+
+	if !req.Failed {
+		// just return if succeed
+		return new(emptypb.Empty), nil
+	}
+
+	if task.AttemptCount <= queue.MaxRetryCount {
+		task.Deadline = nil
+		if err := svc.db.AddTask(ctx, queue, task); err != nil {
+			return nil, err
+		}
+	}
+
+	// TODO: support for dlq
+
+	return new(emptypb.Empty), nil
+}
+
 func (svc *eboolkiqSvc) newTask(q *pb.Queue, t *pb.Task) *pb.Task {
+	t.Id = uuid.Must(uuid.NewRandom()).String()
 	return t
 }
