@@ -42,4 +42,10 @@ type DB interface {
 
 	// FlushTask flush all task from queue.
 	FlushTask(ctx context.Context, queue *pb.Queue)
+
+	// AddWorking adds task to working queue.
+	AddWorking(ctx context.Context, queue *pb.Queue, task *pb.Task)
+
+	// FindAndDeleteWorking finds task from working queue and delete.
+	FindAndDeleteWorking(ctx context.Context, queue *pb.Queue, task *pb.Task) (*pb.Task, error)
 }
