@@ -13,7 +13,7 @@ find ./pb -name "*.pb.go" -delete
 # generate protobuf file
 for f in $(find ./proto/daangn -name "*.proto")
 do
-  protoc -I ./proto \
+  protoc -I /usr/local/include -I ./proto \
     --go_out pb \
     --go_opt paths=source_relative \
     --go-grpc_out pb \
