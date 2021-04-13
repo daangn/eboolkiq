@@ -15,18 +15,40 @@
 package memdb
 
 import (
+	"time"
+
+	"github.com/daangn/eboolkiq"
 	"github.com/daangn/eboolkiq/pb"
 )
 
 type queue struct {
 	*pb.Queue
-	tasks *tasklist
+	tasks   *tasklist
+	working *taskzlist
 }
 
 func newQueue(q *pb.Queue) *queue {
-	return &queue{
-		Queue: q,
-		tasks: newTasklist(),
+	qq := &queue{
+		Queue:   q,
+		tasks:   newTasklist(),
+		working: newTaskzlist(),
+	}
+
+	go qq.runTimeoutMonitor()
+
+	return qq
+}
+
+func (q *queue) runTimeoutMonitor() {
+	tc := time.NewTicker(time.Second)
+	for t := range tc.C {
+		expired := q.working.expire(t)
+		for _, e := range expired {
+			if e.AttemptCount <= q.MaxRetryCount {
+				q.tasks.enqueue(e)
+			}
+			// TODO: support for dlq
+		}
 	}
 }
 
@@ -40,5 +62,18 @@ func (q *queue) GetTask() *pb.Task {
 
 func (q *queue) Flush() {
 	q.tasks.flush()
+	// NOTE: should this method flush working list?
 	return
+}
+
+func (q *queue) AddWorking(task *pb.Task) {
+	q.working.add(task)
+}
+
+func (q *queue) FindAndDeleteWorking(task *pb.Task) (*pb.Task, error) {
+	deleted := q.working.del(task)
+	if deleted == nil {
+		return nil, eboolkiq.ErrTaskNotFound
+	}
+	return deleted, nil
 }

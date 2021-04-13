@@ -24,6 +24,7 @@ var (
 	ErrQueueExists   = NewStatusError(codes.AlreadyExists, "eboolkiq: queue already exists")
 	ErrQueueNotFound = NewStatusError(codes.NotFound, "eboolkiq: queue not found")
 	ErrQueueEmpty    = NewStatusError(codes.NotFound, "eboolkiq: queue is empty")
+	ErrTaskNotFound  = NewStatusError(codes.NotFound, "eboolkiq: task not found")
 )
 
 type statusError struct {
