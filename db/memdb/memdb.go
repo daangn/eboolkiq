@@ -114,3 +114,25 @@ func (db *memdb) FlushTask(ctx context.Context, queue *pb.Queue) {
 
 	q.Flush()
 }
+
+func (db *memdb) AddWorking(ctx context.Context, queue *pb.Queue, task *pb.Task) error {
+	q, err := db.getQueue(queue.Name)
+	if err != nil {
+		return err
+	}
+
+	q.AddWorking(task)
+	return nil
+}
+func (db *memdb) FindAndDeleteWorking(ctx context.Context, queue *pb.Queue, task *pb.Task) (*pb.Task, error) {
+	q, err := db.getQueue(queue.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	deleted, err := q.FindAndDeleteWorking(task)
+	if err != nil {
+		return nil, err
+	}
+	return deleted, nil
+}

@@ -17,10 +17,13 @@ package memdb
 import (
 	"context"
 	"testing"
+	"time"
 
-	"github.com/stretchr/testify/assert"
-
+	"github.com/daangn/eboolkiq"
 	"github.com/daangn/eboolkiq/pb"
+	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func TestNewMemDB(t *testing.T) {
@@ -450,6 +453,112 @@ func TestMemDB_FlushQueue(t *testing.T) {
 			}
 
 			db.FlushTask(context.Background(), test.queue)
+		})
+	}
+}
+
+func TestMemDB_AddWorking(t *testing.T) {
+	db := NewMemDB()
+
+	err := db.CreateQueue(context.TODO(), &pb.Queue{
+		Name:          "test",
+		TaskTimeout:   durationpb.New(time.Second),
+		MaxRetryCount: 2,
+	})
+	assert.NoError(t, err)
+
+	tests := []struct {
+		name  string
+		queue *pb.Queue
+		task  *pb.Task
+		err   error
+	}{
+		{
+			name:  "normal",
+			queue: &pb.Queue{Name: "test"},
+			task:  &pb.Task{Id: "1"},
+			err:   nil,
+		}, {
+			name:  "queue not found",
+			queue: &pb.Queue{Name: "not found"},
+			task:  &pb.Task{Id: "1"},
+			err:   eboolkiq.ErrQueueNotFound,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := db.AddWorking(context.TODO(), test.queue, test.task)
+			assert.Equal(t, test.err, err)
+		})
+	}
+}
+
+func TestMemDB_FindAndDeleteWorking(t *testing.T) {
+	db := NewMemDB()
+
+	q := &pb.Queue{
+		Name:          "test",
+		TaskTimeout:   durationpb.New(time.Second),
+		MaxRetryCount: 2,
+	}
+	assert.NoError(t, db.CreateQueue(context.TODO(), q))
+
+	expired := []*pb.Task{
+		{
+			Id:       "expired-1",
+			Deadline: new(timestamppb.Timestamp),
+		},
+	}
+	for _, task := range expired {
+		assert.NoError(t, db.AddWorking(context.TODO(), q, task))
+	}
+
+	tasks := []*pb.Task{
+		{
+			Id:       "1",
+			Deadline: &timestamppb.Timestamp{Seconds: 999999999999},
+		},
+	}
+	for _, task := range tasks {
+		assert.NoError(t, db.AddWorking(context.TODO(), q, task))
+	}
+
+	time.Sleep(time.Second)
+
+	tests := []struct {
+		name  string
+		queue *pb.Queue
+		task  *pb.Task
+		found *pb.Task
+		err   error
+	}{
+		{
+			name:  "normal",
+			queue: q,
+			task:  tasks[0],
+			found: tasks[0],
+			err:   nil,
+		}, {
+			name:  "queue not found",
+			queue: &pb.Queue{Name: "not found"},
+			task:  &pb.Task{Id: "1"},
+			found: nil,
+			err:   eboolkiq.ErrQueueNotFound,
+		}, {
+			name:  "expired task",
+			queue: q,
+			task:  expired[0],
+			found: nil,
+			err:   eboolkiq.ErrTaskNotFound,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			found, err := db.FindAndDeleteWorking(context.TODO(), test.queue, test.task)
+			assert.Equal(t, test.err, err)
+			assert.Equal(t, test.found, found)
 		})
 	}
 }
