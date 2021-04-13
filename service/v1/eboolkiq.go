@@ -138,7 +138,9 @@ func (svc *eboolkiqSvc) GetTask(ctx context.Context, req *v1.GetTaskReq) (*pb.Ta
 			if queue.TaskTimeout != nil {
 				task.Deadline = timestamppb.New(
 					time.Now().Add(queue.TaskTimeout.AsDuration()))
-				svc.db.AddWorking(ctx, queue, task)
+				if err := svc.db.AddWorking(ctx, queue, task); err != nil {
+					return nil, err
+				}
 			}
 		}
 
@@ -168,7 +170,9 @@ func (svc *eboolkiqSvc) GetTask(ctx context.Context, req *v1.GetTaskReq) (*pb.Ta
 			if queue.TaskTimeout != nil {
 				task.Deadline = timestamppb.New(
 					time.Now().Add(queue.TaskTimeout.AsDuration()))
-				svc.db.AddWorking(ctx, queue, task)
+				if err := svc.db.AddWorking(ctx, queue, task); err != nil {
+					return nil, err
+				}
 			}
 		}
 
