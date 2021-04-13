@@ -156,6 +156,7 @@ func (svc *eboolkiqSvc) GetTask(ctx context.Context, req *v1.GetTaskReq) (*pb.Ta
 		return nil, eboolkiq.ErrQueueEmpty
 	}
 
+	// TODO: close channel when queue is deleted
 	if _, ok := svc.recvq[queue.Name]; !ok {
 		svc.recvq[queue.Name] = make(chan *pb.Task)
 	}
@@ -163,7 +164,11 @@ func (svc *eboolkiqSvc) GetTask(ctx context.Context, req *v1.GetTaskReq) (*pb.Ta
 	select {
 	case <-time.After(d):
 		return nil, eboolkiq.ErrQueueEmpty
-	case task := <-svc.recvq[queue.Name]:
+	case task, ok := <-svc.recvq[queue.Name]:
+		if !ok {
+			return nil, eboolkiq.ErrQueueNotFound
+		}
+
 		task.AttemptCount++
 
 		if !req.AutoFinish {
